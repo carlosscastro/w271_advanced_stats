@@ -1,0 +1,147 @@
+---
+title: "Lab 1"
+author: "Eric, Samir, Carlos"
+date: "September 24, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Loading
+
+
+```{r}
+
+# Load libraries
+library(readr)
+library(car)
+require(dplyr)
+
+# Load data from Csv
+public.opinion <- data.frame(read_csv("public_opinion.csv"))
+
+# Turn categorical / binary features to factors
+public.opinion$sanders_preference <- factor(public.opinion$sanders_preference)
+public.opinion$party <- factor(public.opinion$party)
+public.opinion$race_white <- factor(public.opinion$race_white)
+public.opinion$gender <- factor(public.opinion$gender)
+
+# Show the first few rows
+head(public.opinion)
+
+
+```
+
+
+# Data Cleasing
+
+Below we verify limits, missing values and potential inconsistencies in the data, prior to diving into data analysis.
+
+## Data Cleansing: Party
+
+```{r}
+
+levels(public.opinion$party)
+describe(public.opinion$party)
+```
+
+Text: 3 levels, no missing values. 38.4% independent not in any party. 
+
+## Data Cleansing: Gender
+
+
+```{r}
+
+levels(public.opinion$gender)
+describe(public.opinion$gender)
+```
+
+## Data Cleansing: Race white
+
+```{r}
+
+levels(public.opinion$race_white)
+describe(public.opinion$race_white)
+```
+
+## Data Cleansing: Birth year
+
+```{r}
+
+describe(public.opinion$birthyr)
+
+ggplot(public.opinion, aes(x = birthyr)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.2, fill="#0072B2", colour="black") +
+  ggtitle("Birth Year") + 
+  theme(plot.title = element_text(lineheight=1, face="bold"))
+```
+
+## Data Cleansing: Sanders Preference
+
+```{r}
+
+levels(public.opinion$race_white)
+describe(public.opinion$race_white)
+```
+
+# Data Analysis
+
+## Data Analysis: Birth year
+
+```{r}
+
+ggplot(public.opinion, aes(sanders_preference, birthyr)) +
+  geom_boxplot(aes(fill = sanders_preference)) + 
+  geom_jitter() +
+  ggtitle("Birth year by Sanders Preference") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+
+```
+
+
+```{r}
+
+ggplot(public.opinion, aes(birthyr, fill = sanders_preference, colour = sanders_preference)) +
+  geom_density(alpha=0.2)
+
+```
+
+## Data Analysis: Party
+
+```{r}
+
+# TODO: Here plot / table of sanders preference by party and demonstrate any interesting points
+
+
+```
+
+```{r}
+ggplot(public.opinion, aes(birthyr, fill = party, colour = party)) +
+  geom_density(alpha=0.2)
+
+```
+
+## Data Analysis: Gender
+
+```{r}
+
+```
+## Data Analysis: Race White
+
+
+```{r}
+
+# TODO: more work here but not sure if gender will be useful. Support with data if it wont.
+```
+
+
+# Model Selection
+
+# Test Model Assumptions
+
+# Model Assessment
