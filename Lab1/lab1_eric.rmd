@@ -1,0 +1,297 @@
+---
+title: "Statistical Methods for Discrete Response, Time Series, and Panel Data (W271): Lab 1"
+author: "W271 Instructional Team"
+date: "September 16, 2017"
+output: pdf_document
+---
+
+# Instructions:
+
+*  **Due Date: 10/01/2017 11:59 PM PT**
+
+* Submission:
+    * Submit your own assignment via ISVC
+    * Submit 2 files:
+        1. A pdf file including the summary, the details of your analysis, and all the R codes used to produce the analysis. Please do not suppress the codes in your pdf file.
+        2. R markdown file used to produce the pdf file
+    * Each group only needs to submit one set of files
+    * Use the following file naming convensation; fail to do so will receive 10% reduction in the grade:
+        * SectionNumber_hw01_FirstNameLastNameFirstInitial.fileExtension
+        * For example, if you are in Section 1 and have two students named John Smith and Jane Doe, you should name your file the following
+            * Section1_hw01_JohnS_JaneD.Rmd
+            * Section1_hw01_JohnS_JaneD.pdf
+    * Although it sounds obvious, please write the name of each members of your group on page 1 of your report.
+    * This lab can be completed in a group of up to 3 people. Each group only needs to make one submission. Although you can work by yourself, we encourage you to work in a group.
+    * When working in a group, do not use the "division-of-labor" approach to complete the lab. That is, do not divide the lab by having Student 1 completed questions 1 - 3, Student 2 completed questions 4 - 6, etc. Asking your teammates to do the questions for you is asking them take away your own opportunity to learn.
+
+* Other general guidelines:
+    * If you use R libraries and/or functions to conduct hypothesis tests not covered in this course, you will have to explain why the functions you use are appropriate for the hypothesis you are asked to test. Lacking explanations will result in a score of zero for the corresponding question.
+  
+    * Thoroughly analyze the given dataset. Detect any anomalies, including missing values, potential of top and/or bottom code, etc, in each of the variables.
+    
+    * Your report needs to include a comprehensive Exploratory Data Analysis (EDA) analysis, which includes both graphical and tabular analysis, as taught in this course. Output-dump (that is, graphs and tables that don't come with explanations) will result in a very low, if not zero, score.
+    
+    * Your analysis needs to be accompanied by detailed narrative. Remember, make sure your that when your audience (in this case, the professors and your classmates) can easily understand your your main conclusion and follow your the logic of your analysis. Note that just printing a bunch of graphs and model results, which we call "output dump", will likely receive a very low score.
+    
+    * Your rationale of any decisions made in your modeling needs to be explained and supported with empirical evidence. Remember to use the insights generated from your EDA step to guide your modeling step, as we discussed in live sessions.
+    
+    * All the steps to arrive at your final model need to be shown and explained very clearly.
+
+*  Students are expected to act with regards to UC Berkeley Academic Integrity.
+
+
+# Description of the Business Problem and the Data
+
+Imagine you work in a data science consulting company. Your client is interested in selling T-shirts to voters who are likely to support politically liberal candidates (such as Bernie Sanders). Your client has data from a political survey conducted in January of 2016 and is able to identify voters who preferred Bernie Sanders over Hillary Clinton (1 = Likes Bernie more than Clinton; 0 = Likes Clinton more than Bernie). In addition, this (extremely simple) dataset contains information on respondents': 
+
+- Party affiliation (1 if Democrat , 2 if Independent or Other, and 3 if Republican); 
+
+- Race (1 if white, 0 otherwise); 
+
+- Gender (2 if female, 1 if male);
+
+- and Birthyear. 
+
+Your client conducted a t-test and found that younger voters were more likely to support Sanders and is willing to target younger voters/shoppers based on this analysis. He thinks that you can do better.
+
+For reference, the United States is considered a two party system. The Democratic Party tends to be associated with politically liberal polices while the Republican Party tends to be associated with politically conservative ideas. Voters are not required to be associated with these two parties and, as you will see later, a high proportion of voters are not associated with these two parties.
+
+Note: This dataset is modified from the 2016 American National Election Survey.
+
+
+\newpage
+
+```{r}
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+Load Data & Data Overview
+```{r}
+#Load Data
+public.opinion = read.csv("public_opinion.csv")
+
+#Load Libraries
+library(car)
+require(dplyr)
+library(Hmisc)
+
+#Data Overview
+public.opinion$gender_2 <- public.opinion$gender - 1
+public.opinion$age <- 2017 - public.opinion$birthyr
+#public.opinion$democrat <- as.numeric(public.opinion$party == 1)
+public.opinion$independent <- as.numeric(public.opinion$party == 2)
+public.opinion$republican <- as.numeric(public.opinion$party == 3)
+
+head(public.opinion)
+tail(public.opinion)
+#Changed gender to 0 = Male 1 = Female
+#Created age as of 2017
+
+str(public.opinion)
+glimpse(public.opinion)
+#1200 obs, 5 variables, race_white,gender,sanders_preference are binary, party is categorical, birthyr is continuous
+
+describe(public.opinion)
+summary(public.opinion)
+
+#We are missing 9 responses to sanders preference, average preference for sanders is 57.6%, race_white is 72.9%, 52.5% male,average birthyear is 1968
+```
+
+
+Exploratory Data Analysis
+```{r}
+library(ggplot2)
+library(plyr)
+
+#Age Exploration
+
+# Distribution of Age
+ggplot(public.opinion, aes(x = age)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.2, fill="#0072B2", colour="black") +
+  ggtitle("Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold"))
+#Ages from 20 to 96.  Peaks in the mid 60s and mid 40s.  Dip in the 50s...is this representative of voting population? 
+
+# Sanders preference by Age
+ggplot(public.opinion, aes(factor(sanders_preference), age)) +
+  geom_boxplot(aes(fill = factor(sanders_preference))) + 
+  geom_jitter() +
+  ggtitle("Sanders Preference by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~sanders_preference,summarise,median = median(age),mean=mean(age),sd=sd(age))
+
+#The median age of a Clinton supporter is older, approximately 52 with a range of 20 to 96.  The median age of a Sanders supporter is younger, approximately 46 with a range of 20 to 92.   
+
+# Gender by Age
+ggplot(public.opinion, aes(factor(gender_2), age)) +
+  geom_boxplot(aes(fill = factor(gender_2))) + 
+  geom_jitter() +
+  ggtitle("Gender by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~gender_2,summarise,median = median(age),mean=mean(age),sd=sd(age))
+
+#Median males in the data set are younger with an age of 47, females in the set have a median 52.  The ranges are similar. 
+
+# Party Affiliation by Age
+ggplot(public.opinion, aes(factor(party), age)) +
+  geom_boxplot(aes(fill = factor(party))) + 
+  geom_jitter() +
+  ggtitle("Party Affiliation by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~party,summarise,median = median(age),mean=mean(age),sd=sd(age))
+
+#ggplot(public.opinion, aes(age, fill = party, colour = party)) + geom_density(alpha=0.2)
+
+#Democrats median age is 49, Independents are 45, Republicans are 54.  Republicans have a higher age range and have more observations in the 80+ age range.
+
+```
+
+
+EDA Continued
+```{r}
+#Race Exploration
+
+# Race_White by Age
+ggplot(public.opinion, aes(factor(race_white), age)) +
+  geom_boxplot(aes(fill = factor(race_white))) + 
+  geom_jitter() +
+  ggtitle("Race_white by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~race_white,summarise,median = median(age),mean=mean(age),sd=sd(age))
+#Whites have a higher median age of 53, and non whites are 43 
+
+ddply(public.opinion,~race_white,summarise,mean=mean(gender_2))
+#55% males for non whites, 51% males for whites
+
+ddply(public.opinion[complete.cases(public.opinion),],~race_white,summarise,mean=mean(sanders_preference))
+#63.7% sanders preference for whites, 40.9% sanders preference for non whites
+
+```
+
+
+1. Model the relationship between age and voters' preference for Bernie Sanders over Hillary Clinton. Select the model that you prefer the most and describe why you chose these variables and functional form. 
+
+    a. Describe your chosen model in words, along with a brief description of the variables and the model's functional form (*Note: You do not have to justify your choices at this step*).
+
+    b. Describe the variables your have included in your model and justify why you chose these variables and the model's functional form. (*Hint: you will have to conduct a very careful EDA and use insights generated from the EDA to support your modeling decision. DO NOT USE OUTPUT-DUMP, meaning do not just print a bunch of graphs and let us interpret the graphs for you. Choose your graphs/tables very selectively and present them with narratives to suppor your modeling decisions.*)
+
+    c. Based on your EDA, describe other models that you might have considered and why you ended up choosing your final model. Be sure to print each of the model results and any statistical tests you used to choose which model to use.
+
+    d. Print the model results of your chosen model, even if you did so earlier.
+
+    e. Conduct all of the relevant statistical tests on your chosen model.
+
+    f. Interpret the impact of age on the dependent variable using odds ratios and be sure to include confidence intervals.
+
+```{r}
+
+#Section 1a.
+model.final <- glm(sanders_preference ~ age + gender_2 + race_white + independent + republican + age:race_white, data = public.opinion)
+summary(model.final)
+
+odds_age <- 1/exp(model.final$coefficients[2]*10)
+odds_age
+
+odds_white<- exp(model.final$coefficients[4])
+odds_white
+
+odds_ind <- exp(model.final$coefficients[5])
+odds_ind
+
+odds_rep <- exp(model.final$coefficients[6])
+odds_rep
+
+#Model Overview
+##The model looks at the likelihood of supporting bernie sanders based on 5 explanatory variables. The five explantory variables are age as of 2017, gender (male vs. female), race_white (non white vs. white), independent voter (baseline democrat), republican (baseline democrat).  
+
+#age (continuous)
+#The age variable was caculated as of 2017 based off the birth year variable in the original dataset.  Age has a negative coefficient which is statistically significant showing that an increase in age reduces the likelihood of supporting sanders.  The odds_age object shows that for every 10 years decrease in age we see a ~1.03 increase in the odds of supporting sanders. 
+
+#gender_2 (binary)
+#gender = 0 is male and gender = 1 is female. Gender has a positive coefficent in our model but the results are not significant.  
+
+#race_white (binary)
+#race_white = 0 is non white, race_white = 1 is white. Race_white has a positive coefficient in our model that is statistically significant.  Looking at the odds ratios we see that being white increases odds of supporting sanders by 1.22.  
+
+#independent (binary), republican (binary)
+#independent = 0 is democrat, independent =1 is independent.  republican = 0 is democrat, republican =1 is republican.  Both the independent and republican coefficient have statistically significant position coefficients.  This shows that have either party affiliation versus democrat would increase the probability of supporting sanders.  A look at the odds ratio shows an odds increase of 1.19 for independents and 1.15 for republicans. 
+
+```
+```{r}
+#Section 1b.
+
+#Age Variable
+#Age has been chosen because that is the main effect we are trying to investigate.  The Age by sander preference bix plot shows how age is ditribution by preference for sanders.  From this we see that sanders supporters skew younger with a median age of 46, compared to a median age of 52 for clinton supports.  This distribution reinforces that we should include age in our model.  
+
+#The Distibution of Age charts shows ages ranging from 20 to 96 years old.  The distribution peaks in the mid 60s and mid 40s with a dip in the mid 50s.  Suprising to find a dip in the 50s since I would typically expect older age groups to be over represented as compared to the general population.  
+
+# Age by Sanders Preference
+ggplot(public.opinion, aes(factor(sanders_preference), age)) +
+  geom_boxplot(aes(fill = factor(sanders_preference))) + 
+  geom_jitter() +
+  ggtitle("Sanders Preference by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~sanders_preference,summarise,median = median(age),mean=mean(age),sd=sd(age))
+
+# Distribution of Age
+ggplot(public.opinion, aes(x = age)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.2, fill="#0072B2", colour="black") +
+  ggtitle("Distibution of Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold"))
+
+#Race White Variable
+
+#Looking at the summary of the mean sanders preference by race_white we see that in our sample on average 63% of whites support sanders versus 41% of non whites.  This large difference in preference suggests we should add the race_white variable so we can control for the effect of race when evaluating age.
+
+#Looking at the race_white by age chart we see the distribution of age with respect to race.  Whites skew older with a median age of 53 compared to that of 43 for non whites.  Potentially would be interesting to look add an iteraction term the model, age:race_white, to see the effect of age with respect to age and sanders preference.
+
+complete.po <- public.opinion[complete.cases(public.opinion),]
+ddply(complete.po,~race_white,summarise,mean=mean(sanders_preference))
+
+# Age by Race White
+ggplot(public.opinion, aes(factor(race_white), age)) +
+  geom_boxplot(aes(fill = factor(race_white))) + 
+  geom_jitter() +
+  ggtitle("Race_white by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~race_white,summarise,median = median(age),mean=mean(age),sd=sd(age))
+#Whites have a higher median age of 53, and non whites are 43 
+
+#Party Variable
+
+ggplot(public.opinion, aes(factor(party), age)) +
+  geom_boxplot(aes(fill = factor(party))) + 
+  geom_jitter() +
+  ggtitle("Party Affiliation by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~party,summarise,median = median(age),mean=mean(age),sd=sd(age))
+
+ddply(complete.po,~party,summarise,mean=mean(sanders_preference))
+
+#Democrats median age is 49, Independents are 45, Republicans are 54.  Republicans have a higher age range and have more observations in the 80+ age range.  We should add party to control for party affiliation since there seems to be a difference in age between groups.  Table shows that democrats are much moe likely to vote for clinton compared to independents and republicans.
+
+#Gender Variable
+ggplot(public.opinion, aes(factor(gender_2), age)) +
+  geom_boxplot(aes(fill = factor(gender_2))) + 
+  geom_jitter() +
+  ggtitle("Gender by Age") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(public.opinion,~gender_2,summarise,median = median(age),mean=mean(age),sd=sd(age))
+
+ddply(complete.po,~gender,summarise,mean=mean(sanders_preference))
+
+#Both male and females in the sample have a 57% preference for sanders.  In order dataset women skew towards an older age, median 52 versus  47 for males.  We should add age to control for it's effect in our model.  
+
+```
+2. For your chosen model, graph the relationship between age and the predicted probabilty of supporting Sanders. Be sure to include any graphs that helps you understand how your model can help you answer the question at hand.
+
+3. Comment on the importance of age and evaluate your client's decision to target younger voters.
