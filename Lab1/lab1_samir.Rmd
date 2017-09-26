@@ -119,10 +119,15 @@ age_bin_agg_party <- with(publicopinion_narm,
                                   list(agebin=5*round(age/5), 
                                        party=partyfactor), mean))
 
-ggp <- ggplot(age_bin_agg_party, aes(x=agebin, y=sanders_preference,
-                                     color=party))
+age_bin_agg_party$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=5*round(age/5), 
+                                       party=partyfactor), length))[,3]
 
-ggp + geom_point(aes(color=party), size=2)+
+ggp <- ggplot(age_bin_agg_party, aes(x=agebin, y=sanders_preference,
+                                     color=party, size=n))
+
+ggp + geom_point(aes(color=party))+
   geom_smooth(method="loess", se=F)+
   ylab("Percent with Sanders preference")+
   xlab("Age (divided into 5-year bins)")+
@@ -136,10 +141,15 @@ age_bin_agg_gender <- with(publicopinion_narm,
                                   list(agebin=5*round(age/5), 
                                        gender=genderfactor), mean))
 
-ggp <- ggplot(age_bin_agg_gender, aes(x=agebin, y=sanders_preference,
-                                     color=gender))
+age_bin_agg_gender$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=5*round(age/5), 
+                                       gender=genderfactor), length))[,3]
 
-ggp + geom_point(aes(color=gender), size=2)+
+ggp <- ggplot(age_bin_agg_gender, aes(x=agebin, y=sanders_preference,
+                                     color=gender, size=n))
+
+ggp + geom_point(aes(color=gender))+
   geom_smooth(method="loess", se=F)+
   ylab("Percent with Sanders preference")+
   xlab("Age (divided into 5-year bins)")+
@@ -152,14 +162,81 @@ age_bin_agg_race <- with(publicopinion_narm,
                         aggregate(cbind(sanders_preference),
                                   list(agebin=5*round(age/5), 
                                        race=racefactor), mean))
+age_bin_agg_race$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=5*round(age/5), 
+                                       race=racefactor), length))[,3]
 
 ggp <- ggplot(age_bin_agg_race, aes(x=agebin, y=sanders_preference,
-                                     color=race))
+                                     color=race, size=n))
 
-ggp + geom_point(aes(color=race), size=2)+
+ggp + geom_point(aes(color=race))+
   geom_smooth(method="loess", se=F)+
   ylab("Percent with Sanders preference")+
   xlab("Age (divided into 5-year bins)")+
   ggtitle("Sanders preference grouped by age bins\n(divided by race)")+
+  theme(plot.title=element_text(hjust=.5))
+```
+
+```{r}
+age_bin_agg_race <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       race=racefactor), mean))
+age_bin_agg_race$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       race=racefactor), length))[,3]
+
+ggp <- ggplot(age_bin_agg_race, aes(x=agebin, y=sanders_preference,
+                                     color=race, size=n))
+
+ggp + geom_point(aes(color=race))+
+  geom_smooth(method="loess", se=F)+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Sanders preference grouped by age\n(divided by race)")+
+  theme(plot.title=element_text(hjust=.5))
+```
+
+```{r}
+age_bin_agg_gender <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       gender=genderfactor), mean))
+age_bin_agg_gender$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       gender=genderfactor), length))[,3]
+
+ggp <- ggplot(age_bin_agg_gender, aes(x=agebin, y=sanders_preference,
+                                     color=gender, size=n))
+
+ggp + geom_point(aes(color=gender))+
+  geom_smooth(method="loess", se=F)+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Sanders preference grouped by age\n(divided by gender)")+
+  theme(plot.title=element_text(hjust=.5))
+```
+
+```{r}
+age_bin_agg_party <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       party=partyfactor), mean))
+age_bin_agg_party$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       party=partyfactor), length))[,3]
+
+ggp <- ggplot(age_bin_agg_party, aes(x=agebin, y=sanders_preference,
+                                     color=party, size=n))
+
+ggp + geom_point(aes(color=party))+
+  geom_smooth(method="loess", se=F)+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Sanders preference grouped by age\n(divided by party)")+
   theme(plot.title=element_text(hjust=.5))
 ```
