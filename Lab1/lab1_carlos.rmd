@@ -30,9 +30,30 @@ public.opinion$party <- factor(public.opinion$party)
 public.opinion$race_white <- factor(public.opinion$race_white)
 public.opinion$gender <- factor(public.opinion$gender)
 
+# Recode gender
+public.opinion$gender.name[public.opinion$gender == 1] <- "Male"
+public.opinion$gender.name[public.opinion$gender == 2] <- "Female"
+public.opinion$gender.name = factor(public.opinion$gender.name)
+
+# Recode birth year into age
+public.opinion$age <- 2017 - public.opinion$birthyr
+
+# Recode party
+public.opinion$party.name[public.opinion$party == 1] <- "Democrat"
+public.opinion$party.name[public.opinion$party == 2] <- "Independent"
+public.opinion$party.name[public.opinion$party == 3] <- "Republican"
+public.opinion$party.name = factor(public.opinion$party.name)
+
+# Remove records without sanders preference as it is our outcome variable, and without it we can't use those records
+# Actually move this below the data cleansing or unify
+public.opinion <- public.opinion[complete.cases(public.opinion), ]
+
+summary(public.opinion[!is.na(public.opinion$sanders_preference)])
+
 # Show the first few rows
 head(public.opinion)
 
+str(public.opinion)
 
 ```
 
@@ -90,14 +111,14 @@ describe(public.opinion$race_white)
 
 # Data Analysis
 
-## Data Analysis: Birth year
+## Data Analysis: Age
 
 ```{r}
 
-ggplot(public.opinion, aes(sanders_preference, birthyr)) +
+ggplot(public.opinion, aes(sanders_preference, age)) +
   geom_boxplot(aes(fill = sanders_preference)) + 
   geom_jitter() +
-  ggtitle("Birth year by Sanders Preference") + 
+  ggtitle("Age by Sanders Preference") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
 
@@ -106,7 +127,7 @@ ggplot(public.opinion, aes(sanders_preference, birthyr)) +
 
 ```{r}
 
-ggplot(public.opinion, aes(birthyr, fill = sanders_preference, colour = sanders_preference)) +
+ggplot(public.opinion, aes(age, fill = sanders_preference, colour = sanders_preference)) +
   geom_density(alpha=0.2)
 
 ```
@@ -121,7 +142,30 @@ ggplot(public.opinion, aes(birthyr, fill = sanders_preference, colour = sanders_
 ```
 
 ```{r}
-ggplot(public.opinion, aes(birthyr, fill = party, colour = party)) +
+
+ggplot(public.opinion, aes(party.name, age)) +
+  geom_boxplot(aes(fill = party.name)) + 
+  #geom_jitter() +
+  ggtitle("Age vs party segregated on sanders preference") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+
+```
+
+
+```{r}
+
+ggplot(public.opinion, aes(party.name, age)) +
+  geom_boxplot(aes(fill = sanders_preference)) + 
+  #geom_jitter() +
+  ggtitle("Age vs party segregated on sanders preference") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+
+```
+
+```{r}
+ggplot(public.opinion, aes(age, fill = party, colour = party.name)) +
   geom_density(alpha=0.2)
 
 ```
@@ -129,19 +173,117 @@ ggplot(public.opinion, aes(birthyr, fill = party, colour = party)) +
 ## Data Analysis: Gender
 
 ```{r}
-
+table(public.opinion$sanders_preference, public.opinion$gender.name)
 ```
 ## Data Analysis: Race White
 
+```{r}
+
+ggplot(public.opinion, aes(race_white, age)) +
+  geom_boxplot(aes(fill = sanders_preference)) + 
+  #geom_jitter() +
+  ggtitle("Age vs party segregated on sanders preference") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+
+```
+
+```{r}
+ggplot(public.opinion, aes(gender.name, age)) +
+  geom_boxplot(aes(fill = gender.name)) + 
+  geom_jitter() +
+  ggtitle("Age vs Race") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+```
 
 ```{r}
 
-# TODO: more work here but not sure if gender will be useful. Support with data if it wont.
-```
+ggplot(public.opinion, aes(race_white, age)) +
+  geom_boxplot(aes(fill = race_white)) + 
+  #geom_jitter() +
+  ggtitle("Age vs Race") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
 
+# Bias in the ages for the sample!!!!!
+
+```
 
 # Model Selection
 
-# Test Model Assumptions
+```{r}
+model <- glm(sanders_preference ~ age + gender.name + race_white + party.name + age:race_white, family =  binomial(link = 'logit'), data = public.opinion)
+summary(model)
+```
 
-# Model Assessment
+
+```{r}
+model.simple <- glm(sanders_preference ~ age + race_white + party.name, family =  binomial(link = 'logit'), data = public.opinion)
+summary(model.simple)
+```
+
+# Model
+
+$$logit(\hat{\pi}) = -0.114017 - 0.01248 age + 0.872782 race_white1 + 0.713501 party.nameIndependent + 0.594231 party.nameRepublican$$
+
+# Assessment
+
+## OR for level Party Independent
+
+```{r}
+OR_independent = exp(0.713501)
+OR_independent
+```
+
+The odds of supporting sanders are 2.04 times as large for for individuals of independent political party compared to democrats where the age and race are held constant.
+
+
+## OR for level Party Republican
+
+```{r}
+OR_republican = exp(0.594231)
+OR_republican
+```
+
+The odds of supporting sanders are 1.81 times as large for for individuals of independent political party compared to democrats where the age and race are held constant.
+
+## OR for level white race
+
+```{r}
+OR_white = exp(0.872782)
+OR_white
+```
+
+The odds of supporting sanders are 2.39 times as large for for individuals of white color compared to non-white where the age and political party are held constant.
+
+# Hypothesis testing
+
+Our reduced model
+
+$$logit(\hat{\pi}) = -0.114017 - 0.01248 age + 0.872782 race_white1 + 0.713501 party.nameIndependent + 0.594231 party.nameRepublican$$
+
+# Likelihood ratio test for full model
+
+```{r}
+Anova(mod = model, test = "LR")
+```
+
+# Likelihood ratio test for reduced model
+
+```{r}
+Anova(mod = model, test = "LR")
+```
+
+
+```{r}
+w <- aggregate(formula = sanders_preference ~ age + race_white + party.name, data = public.opinion, FUN = sum)
+
+n <- aggregate(formula = sanders_preference ~ age + race_white + party.name, data = public.opinion, FUN = length)
+
+w.n <- data.frame(age = w$age, success = w$sanders_preference, trials = n$sanders_preference, proportion = round(w$sanders_preference/n$sanders_preference, 4))
+head(w.n)
+
+win.graph(width = 7, height = 6, pointsize = 12)
+plot(x = w$age, y = )
+
+```
+
