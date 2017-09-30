@@ -69,7 +69,8 @@ opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 Load Data & Data Overview
 ```{r}
 #Load Data
-public.opinion = read.csv("public_opinion.csv")
+#publicopinion = read.csv("C:/Users/eyang/Desktop/public_opinion.csv")
+publicopinion = read.csv("public_opinion.csv")
 
 #Load Libraries
 library(car)
@@ -77,23 +78,27 @@ require(dplyr)
 library(Hmisc)
 
 #Data Overview
-public.opinion$gender_2 <- public.opinion$gender - 1
-public.opinion$age <- 2017 - public.opinion$birthyr
-#public.opinion$democrat <- as.numeric(public.opinion$party == 1)
-public.opinion$independent <- as.numeric(public.opinion$party == 2)
-public.opinion$republican <- as.numeric(public.opinion$party == 3)
+publicopinion$partyfactor <- ifelse(publicopinion$party==1, 'Democrat', 
+                                    ifelse(publicopinion$party==2, 'Other', 
+                                           'Republican'))
+publicopinion$age <- 2017 - publicopinion$birthyr
+publicopinion$genderfactor <- ifelse(publicopinion$gender==1,'Male', 'Female')
+publicopinion$racefactor <- ifelse(publicopinion$race_white==1, 'White', 'Non-White')
+publicopinion$spfactor <- ifelse(publicopinion$sanders_preference==1, "Yes", "No")
+publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
+publicopinion$gender_2 <- publicopinion$gender - 1
 
-head(public.opinion)
-tail(public.opinion)
+head(publicopinion)
+tail(publicopinion)
 #Changed gender to 0 = Male 1 = Female
 #Created age as of 2017
 
-str(public.opinion)
-glimpse(public.opinion)
+str(publicopinion)
+glimpse(publicopinion)
 #1200 obs, 5 variables, race_white,gender,sanders_preference are binary, party is categorical, birthyr is continuous
 
-describe(public.opinion)
-summary(public.opinion)
+describe(publicopinion)
+summary(publicopinion)
 
 #We are missing 9 responses to sanders preference, average preference for sanders is 57.6%, race_white is 72.9%, 52.5% male,average birthyear is 1968
 ```
@@ -107,42 +112,42 @@ library(plyr)
 #Age Exploration
 
 # Distribution of Age
-ggplot(public.opinion, aes(x = age)) +
+ggplot(publicopinion, aes(x = age)) +
   geom_histogram(aes(y = ..density..), binwidth = 0.2, fill="#0072B2", colour="black") +
   ggtitle("Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold"))
 #Ages from 20 to 96.  Peaks in the mid 60s and mid 40s.  Dip in the 50s...is this representative of voting population? 
 
 # Sanders preference by Age
-ggplot(public.opinion, aes(factor(sanders_preference), age)) +
-  geom_boxplot(aes(fill = factor(sanders_preference))) + 
+ggplot(publicopinion, aes(spfactor, age)) +
+  geom_boxplot(aes(fill = spfactor)) + 
   geom_jitter() +
   ggtitle("Sanders Preference by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~sanders_preference,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~spfactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 
 #The median age of a Clinton supporter is older, approximately 52 with a range of 20 to 96.  The median age of a Sanders supporter is younger, approximately 46 with a range of 20 to 92.   
 
 # Gender by Age
-ggplot(public.opinion, aes(factor(gender_2), age)) +
-  geom_boxplot(aes(fill = factor(gender_2))) + 
+ggplot(publicopinion, aes(genderfactor, age)) +
+  geom_boxplot(aes(fill = genderfactor)) + 
   geom_jitter() +
   ggtitle("Gender by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~gender_2,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~genderfactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 
 #Median males in the data set are younger with an age of 47, females in the set have a median 52.  The ranges are similar. 
 
 # Party Affiliation by Age
-ggplot(public.opinion, aes(factor(party), age)) +
-  geom_boxplot(aes(fill = factor(party))) + 
+ggplot(publicopinion, aes(partyfactor, age)) +
+  geom_boxplot(aes(fill = partyfactor)) + 
   geom_jitter() +
   ggtitle("Party Affiliation by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~party,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~partyfactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 
 #ggplot(public.opinion, aes(age, fill = party, colour = party)) + geom_density(alpha=0.2)
 
@@ -156,19 +161,19 @@ EDA Continued
 #Race Exploration
 
 # Race_White by Age
-ggplot(public.opinion, aes(factor(race_white), age)) +
-  geom_boxplot(aes(fill = factor(race_white))) + 
+ggplot(publicopinion, aes(racefactor, age)) +
+  geom_boxplot(aes(fill = racefactor)) + 
   geom_jitter() +
   ggtitle("Race_white by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~race_white,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~racefactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 #Whites have a higher median age of 53, and non whites are 43 
 
-ddply(public.opinion,~race_white,summarise,mean=mean(gender_2))
+ddply(publicopinion,~racefactor,summarise,mean=mean(gender_2))
 #55% males for non whites, 51% males for whites
 
-ddply(public.opinion[complete.cases(public.opinion),],~race_white,summarise,mean=mean(sanders_preference))
+ddply(publicopinion[complete.cases(publicopinion),],~racefactor,summarise,mean=mean(sanders_preference))
 #63.7% sanders preference for whites, 40.9% sanders preference for non whites
 
 ```
@@ -191,23 +196,26 @@ ddply(public.opinion[complete.cases(public.opinion),],~race_white,summarise,mean
 ```{r}
 
 #Section 1a.
-model.final <- glm(sanders_preference ~ age + gender_2 + race_white + independent + republican + age:race_white, data = public.opinion)
+model.final <- glm(sanders_preference ~ age + race_white + partyfactor, data = publicopinion, family = binomial(link = logit))
+
 summary(model.final)
 
-odds_age <- 1/exp(model.final$coefficients[2]*10)
+odds_age <- exp(model.final$coefficients[2]*-10)
 odds_age
 
-odds_white<- exp(model.final$coefficients[4])
+odds_white<- exp(model.final$coefficients[3])
 odds_white
 
-odds_ind <- exp(model.final$coefficients[5])
+odds_ind <- exp(model.final$coefficients[4])
 odds_ind
 
-odds_rep <- exp(model.final$coefficients[6])
+odds_rep <- exp(model.final$coefficients[5])
 odds_rep
 
+odds_ind/odds_rep
+
 #Model Overview
-##The model looks at the likelihood of supporting bernie sanders based on 5 explanatory variables. The five explantory variables are age as of 2017, gender (male vs. female), race_white (non white vs. white), independent voter (baseline democrat), republican (baseline democrat).  
+##The model looks at the likelihood of supporting bernie sanders based on 4 explanatory variables. The three explantory variables are age as of 2017, race_white (non white vs. white), independent voter (baseline democrat), republican (baseline democrat).  
 
 #age (continuous)
 #The age variable was caculated as of 2017 based off the birth year variable in the original dataset.  Age has a negative coefficient which is statistically significant showing that an increase in age reduces the likelihood of supporting sanders.  The odds_age object shows that for every 10 years decrease in age we see a ~1.03 increase in the odds of supporting sanders. 
@@ -226,21 +234,21 @@ odds_rep
 #Section 1b.
 
 #Age Variable
-#Age has been chosen because that is the main effect we are trying to investigate.  The Age by sander preference bix plot shows how age is ditribution by preference for sanders.  From this we see that sanders supporters skew younger with a median age of 46, compared to a median age of 52 for clinton supports.  This distribution reinforces that we should include age in our model.  
+#Age has been chosen because that is the main effect we are trying to investigate.  The Age by sander preference box plot shows how age is ditributed by preference for sanders.  From this we see that sanders supporters skew younger with a median age of 46, compared to a median age of 52 for clinton supports.  This distribution reinforces that we should include age in our model.  
 
 #The Distibution of Age charts shows ages ranging from 20 to 96 years old.  The distribution peaks in the mid 60s and mid 40s with a dip in the mid 50s.  Suprising to find a dip in the 50s since I would typically expect older age groups to be over represented as compared to the general population.  
 
 # Age by Sanders Preference
-ggplot(public.opinion, aes(factor(sanders_preference), age)) +
-  geom_boxplot(aes(fill = factor(sanders_preference))) + 
+ggplot(publicopinion, aes(spfactor, age)) +
+  geom_boxplot(aes(fill = spfactor)) + 
   geom_jitter() +
   ggtitle("Sanders Preference by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~sanders_preference,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~spfactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 
 # Distribution of Age
-ggplot(public.opinion, aes(x = age)) +
+ggplot(publicopinion, aes(x = age)) +
   geom_histogram(aes(y = ..density..), binwidth = 0.2, fill="#0072B2", colour="black") +
   ggtitle("Distibution of Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold"))
@@ -251,47 +259,114 @@ ggplot(public.opinion, aes(x = age)) +
 
 #Looking at the race_white by age chart we see the distribution of age with respect to race.  Whites skew older with a median age of 53 compared to that of 43 for non whites.  Potentially would be interesting to look add an iteraction term the model, age:race_white, to see the effect of age with respect to age and sanders preference.
 
-complete.po <- public.opinion[complete.cases(public.opinion),]
+complete.po <- publicopinion[complete.cases(publicopinion),]
 ddply(complete.po,~race_white,summarise,mean=mean(sanders_preference))
 
 # Age by Race White
-ggplot(public.opinion, aes(factor(race_white), age)) +
-  geom_boxplot(aes(fill = factor(race_white))) + 
+ggplot(publicopinion, aes(racefactor, age)) +
+  geom_boxplot(aes(fill = racefactor)) + 
   geom_jitter() +
   ggtitle("Race_white by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~race_white,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~racefactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 #Whites have a higher median age of 53, and non whites are 43 
 
 #Party Variable
 
-ggplot(public.opinion, aes(factor(party), age)) +
-  geom_boxplot(aes(fill = factor(party))) + 
+ggplot(publicopinion, aes(partyfactor, age)) +
+  geom_boxplot(aes(fill = partyfactor)) + 
   geom_jitter() +
   ggtitle("Party Affiliation by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~party,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~partyfactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 
-ddply(complete.po,~party,summarise,mean=mean(sanders_preference))
+ddply(complete.po,~partyfactor,summarise,mean=mean(sanders_preference))
 
 #Democrats median age is 49, Independents are 45, Republicans are 54.  Republicans have a higher age range and have more observations in the 80+ age range.  We should add party to control for party affiliation since there seems to be a difference in age between groups.  Table shows that democrats are much moe likely to vote for clinton compared to independents and republicans.
 
 #Gender Variable
-ggplot(public.opinion, aes(factor(gender_2), age)) +
-  geom_boxplot(aes(fill = factor(gender_2))) + 
+ggplot(publicopinion, aes(genderfactor, age)) +
+  geom_boxplot(aes(fill = genderfactor)) + 
   geom_jitter() +
   ggtitle("Gender by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 
-ddply(public.opinion,~gender_2,summarise,median = median(age),mean=mean(age),sd=sd(age))
+ddply(publicopinion,~genderfactor,summarise,median = median(age),mean=mean(age),sd=sd(age))
 
-ddply(complete.po,~gender,summarise,mean=mean(sanders_preference))
+ddply(complete.po,~genderfactor,summarise,mean=mean(sanders_preference))
 
 #Both male and females in the sample have a 57% preference for sanders.  In order dataset women skew towards an older age, median 52 versus  47 for males.  We should add age to control for it's effect in our model.  
 
 ```
+
+```{r}
+#Section 1c.
+library(package=car)
+
+model.two <- glm(sanders_preference ~ age + genderfactor + racefactor + partyfactor + age:racefactor, data = publicopinion, family = binomial(link = 'logit'))
+summary(model.two)
+
+Anova(model.two, test = 'LR')
+
+#We also investigated a model that included gender and an interaction variable age:racefactor.  In the EDA we saw that both male and females in the sample have a 57% preference for sanders.  However in the dataset women skew towards an older age, median 52 versus  47 for males.  We invetiageted adding gender in our model to control for the different distribution in ages by gender.  Similarly we saw a difference in ages by race.  We experimented adding an interaction term here and saw a positive coefficient 0.01 for the interaction term.  This suggests support for sanders for whites decreased less sharply as age increases.  However this was not statistically significant. 
+
+
+```
+
+```{r}
+#1c Continued
+#Wald Confidence Interval for Age
+age.beta.ci<-confint.default(object = model.final, parm ="age", level = 0.95)
+#age.beta.ci
+exp(age.beta.ci*10)
+
+race.beta.ci<-confint.default(object = model.final, parm ="race_white", level = 0.95)
+#race.beta.ci
+exp(race.beta.ci)
+
+partyother.beta.ci<-confint.default(object = model.final, parm ="partyfactorOther", level = 0.95)
+#partyother.beta.ci
+exp(partyother.beta.ci)
+
+partyrepub.beta.ci<-confint.default(object = model.final, parm ="partyfactorRepublican", level = 0.95)
+#partyrepub.beta.ci
+exp(partyrepub.beta.ci)
+
+```
 2. For your chosen model, graph the relationship between age and the predicted probabilty of supporting Sanders. Be sure to include any graphs that helps you understand how your model can help you answer the question at hand.
 
+```{r}
+#2.
+#Democrat
+curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_white = 0, partyfactor = 'Democrat' ), type = "response"), col = "red", lty = "solid", xlim = c(20,90),
+ylim = c(0,1), ylab = "Estimated probability", main = "Democrat Sanders Probability by Age",
+xlab = "Age", panel.first = grid(col = "gray", lty = "dotted"), cex.main = 0.9, lwd = 1)
+
+curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_white = 1, partyfactor = 'Democrat'), type = "response"),col = "blue", lty = "dotdash", lwd = 1, add = TRUE)
+
+legend(x = 20, y = 0.4, legend = c("Non White", "White"), lty = c("solid", "dotdash"), col = c("red", "blue"), lwd = c(1,1), bty = "n")
+
+#Independent
+curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_white = 0, partyfactor = 'Other'), type = "response"), col = "red", lty = "solid", xlim = c(20,90),
+ylim = c(0,1), ylab = "Estimated probability", main = "Independent Sanders Probability by Age",
+xlab = "Age", panel.first = grid(col = "gray", lty = "dotted"), cex.main = 0.9, lwd = 1)
+
+curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_white = 1, partyfactor = 'Other'), type = "response"),col = "blue", lty = "dotdash", lwd = 1, add = TRUE)
+
+legend(x = 20, y = 0.4, legend = c("Non White", "White"), lty = c("solid", "dotdash"), col = c("red", "blue"), lwd = c(1,1), bty = "n")
+
+#Republican
+curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_white = 0, partyfactor = 'Republican'), type = "response"), col = "red", lty = "solid", xlim = c(20,90),
+ylim = c(0,1), ylab = "Estimated probability", main = "Republican Sanders Probability by Age",
+xlab = "Age", panel.first = grid(col = "gray", lty = "dotted"), cex.main = 0.9, lwd = 1)
+
+curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_white = 1, partyfactor = 'Republican'), type = "response"),col = "blue", lty = "dotdash", lwd = 1, add = TRUE)
+
+legend(x = 20, y = 0.4, legend = c("Non White", "White"), lty = c("solid", "dotdash"), col = c("red", "blue"), lwd = c(1,1), bty = "n")
+
+```
+
 3. Comment on the importance of age and evaluate your client's decision to target younger voters.
+Our investigation shows that there is a statistically significant effect on sanders voting preference when you change age.  For every 10 year decrease in age you increase the chance of voting for sanders by 1.13 times.  The client would be correct in targeting younder voters if this is the only information avialable to them.  Adding more variables we have the potetial to be more targeted in our campaign.  Specifcally we should avoid non white democrat voters whos likelihood to vote for sanders is below 50% for all age ranges.  Conversely the group with the highest likelihood to vote for sanders are white independent voters who have greater than 55% of voting for sanders across all age ranges.  We've also seen that white voters tend to prefer sanders much more than non white, with 2.39 times higher odds of voting for sanders.  Similary Independents and Republicans have much higher odds of supporting sanders with 2.04 and 1.18 times greater odds of supporting sanders compared with democrats.    
