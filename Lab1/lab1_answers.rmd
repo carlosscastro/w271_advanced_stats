@@ -437,11 +437,11 @@ Anova(model.final)
 
 For example, for the $age$ explanatory variable, we obtain a statistically significant p-value 0.0006217, rejecting the null hypothesis that $\beta_{age} = 0$. For Race and Party we also obtained statistically significant p-values and we can also reject their null hypothesis, which means that there is evidence that each explanatory variable has an effect on the probability of voters supporting Sanders over Clinton.
 
-# 1.f Age Impact Interpretation
+## 1.f Age Interpretation and Odds Ratios
 
-#Interpret the impact of age on the dependent variable using odds ratios and be sure to include confidence intervals.
+### Odds Ratios
 
-First, let's calculate the effect in the odds of supporting Sanders caused by a $c$ year change in age. For this, we calculate the odds ratio:
+First, let's obtain an expression for the effect in the odds of supporting Sanders caused by a $c$ year change in age. For this, we calculate the odds ratio:
 
 $$OR = \frac{Odds_{age+c}}{Odds_{age}} = \frac{e^{\beta_0 + \beta_{age} (age + c) + \beta_{race.white} race.white + \beta_{party.republican} party.republican + \beta_{party.independent} party.independent}}{e^{\beta_0 + \beta_{age} (age + c) + \beta_{race.white} race.white + \beta_{party.republican} party.republican + \beta_{party.independent} party.independent}}$$
 
@@ -456,6 +456,39 @@ For example, we can calculate the Odds Ratio for a $10$ year decrease in age by 
 ```
 
 This Odd Ratio can be interpreted as: the odds of supporting sanders are $1.132925$ times larger for every 10 year decrease in age of the voters.
+
+### Odds Ratios and Confidence Intervals
+
+To include confidence intervals in our odd ratios, we use the Wald confidence interval, which comes from the following expression:
+
+$$c\hat{\beta_{age}} \pm cZ_{1-\alpha/2} \sqrt(Var(\hat{\beta_{age}}))$$
+
+This means we need the variance of $\beta_{age}$, which we can obtain from the variance-covariance matrix for our model:
+
+```{r}
+vcov(model.final)
+```
+
+Where $var(\hat{\beta_{age}})$ is in the diagonal, with value $1.344168e-05$.
+
+Now we can calculate the intervals:
+
+```{r}
+c = 10
+alpha = 0.05
+confint = c * qnorm(1 - alpha/2) * sqrt(1.344168e-05)
+
+odds.ratio = 1 / exp(model.final$coefficients[2] * 10)
+
+lower = odds.ratio - confint
+upper = odds.ratio + confint
+
+odds.ratio
+lower
+upper
+```
+
+So going back to our interpretation, the odds of supporting sanders are $1.132925$ times larger for every 10 year decrease in age of the voters. This ratio, for the 95% confidence interval, can be found between $1.204783$ and $1.061067$.
 
 # 2 Plot: Age vs Predicted probability of supporting Sanders
 
