@@ -150,8 +150,8 @@ Ages range from 20 to 96.  Peaks in the mid 60s and mid 40s and a dip in the 50s
 
 ```{r}
 
-ggplot(public.opinion, aes(party.name, age)) +
-  geom_boxplot(aes(fill = sanders_preference)) + 
+ggplot(publicopinion, aes(partyfactor, age)) +
+  geom_boxplot(aes(fill = spfactor)) + 
   #geom_jitter() +
   ggtitle("Age vs party segregated on sanders preference") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
@@ -225,8 +225,8 @@ Above is a scatterplot of age on the x-axis, where color represents the politica
 The democrats seem to have a fairly clear relationship with age in that younger democrats look more likely to support Sanders than older ones. The relationship within Republicans is less clear, and for independents, it looks almost quadratic (as the smooth curve lifts upwards both for younger and older voters). The curves are loess smoothed curves and not meant to be a perfect representation of overall trends. However, there is still enough evidence to support at least trying to model an age by party interaction, since it looks like different parties may have different relationships with age.
 ## Race
 ```{r}
-ggplot(public.opinion, aes(race_white, age)) +
-  geom_boxplot(aes(fill = sanders_preference)) + 
+ggplot(publicopinion, aes(racefactor, age)) +
+  geom_boxplot(aes(fill = spfactor)) + 
   #geom_jitter() +
   ggtitle("Age vs party segregated on sanders preference") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
