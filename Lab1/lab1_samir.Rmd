@@ -19,6 +19,7 @@ publicopinion <- read.csv('C:/Users/Samir/Documents/MIDS/StatsF17/lab 1/public_o
 publicopinion$partyfactor <- ifelse(publicopinion$party==1, 'Democrat', 
                                     ifelse(publicopinion$party==2, 'Other', 
                                            'Republican'))
+
 publicopinion$age <- 2017 - publicopinion$birthyr
 publicopinion$genderfactor <- ifelse(publicopinion$gender==1,'Male', 'Female')
 publicopinion$racefactor <- ifelse(publicopinion$race_white==1, 'White', 'Non-White')
@@ -26,102 +27,87 @@ publicopinion$spfactor <- ifelse(publicopinion$sanders_preference==1, "Yes", "No
 publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
 ```
 
+#Question 1: Model the relationship between age and voters' preference for Bernie Sanders over Hillary Clinton. Select the model that you prefer the most and describe why you chose these variables and functional form.
+
+##Question 1a: Describe your chosen model in words, along with a brief description of the variables and the model's functional form (Note: You do not have to justify your choices at this step).
+
+```{r}
+glm.out2 <- glm.out <- glm(sanders_preference ~ age*genderfactor+partyfactor+racefactor,
+               data=publicopinion_narm,
+               family=binomial(link="logit"))
+
+anova(glm.out, glm.out2, test="LR")
+```
+
+```{r}
+glm.out <- glm(sanders_preference ~ age*racefactor+partyfactor+racefactor,
+               data=publicopinion_narm,
+               family=binomial(link="logit"))
+summary(glm.out)
+```
+
+
+
+We chose a logistic regression model to predict Sanders preference among voters using the logit link function. As predictors in the model, in addition to the main variable of interest age, we have included political party (Democrat, Republican, or Other) and race (Whte or Non-White)
+
+##Question 1b: Describe the variables your have included in your model and justify why you chose these variables and the model's functional form.
+
+
+###Age
+
+```{r}
+ggp <- ggplot(publicopinion_narm, aes(x=age, y=sanders_preference))
+
+ggp + geom_point()+
+  geom_smooth(method="loess", se=T)+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Sanders preference grouped by age")+
+  theme(plot.title=element_text(hjust=.5))
+```
+
+Above is a scatterplot of all of the points in the set, with age on the x-axis and the binary variable sanders_preference on the y-axis. Displaying the dots like this is not necessarily informative, but the loess smooth curve - and standard error ribbon - reveals an interesting trend. Below the age 50, there seems to be a trend for younger voters to prefer Sanders. However, this trend is also seen in the opposite direction for voters above around 70. This would suggest that including a quadratic term for age might be useful. However, it is important to note that the standard error ribbon is very large towards the older end of the age range, which is indicative of how few voters of that age range we really have. While we should try modeling a quadratic term for age, we should be careful not to over-interpret any result based off insufficient data.
+
+```{r}
+length(publicopinion_narm[publicopinion_narm$age>70,1])*100/
+  length(publicopinion_narm[,1])
+```
+
+Only 11% of voters in the sample are older than 70.
+
+
+
+
+###Political party
+
+Party is a three-level categorical variable with levels of Democrat, Reupublican, or other. 
 
 ```{r}
 po_party_agg <- with(publicopinion_narm,
                      aggregate(cbind(100*sanders_preference),
                                list(partyfactor=partyfactor),
                                mean))
+po_party_agg$n <- with(publicopinion_narm,
+                     aggregate(cbind(100*sanders_preference),
+                               list(partyfactor=partyfactor),
+                               length))[,2]
+
 po_party_df <- data.frame(sanders_pref_percent=po_party_agg$V1,
-                          party=po_party_agg$partyfactor)
+                          party=po_party_agg$partyfactor, 
+                          sample_percent = 100*po_party_agg$n/1191)
 po_party_df
 ```
 
-```{r}
-po_gender_agg <- with(publicopinion_narm,
-                     aggregate(cbind(100*sanders_preference),
-                               list(genderfactor=genderfactor),
-                               mean))
-po_gender_df <- data.frame(sanders_pref_percent=po_gender_agg$V1,
-                          gender=po_gender_agg$genderfactor)
-po_gender_df
-
-```
-
-```{r}
-po_race_agg <- with(publicopinion_narm,
-                     aggregate(cbind(100*sanders_preference),
-                               list(racefactor=racefactor),
-                               mean))
-po_race_df <- data.frame(sanders_pref_percent=po_race_agg$V1,
-                          gender=po_race_agg$racefactor)
-po_race_df
-```
-
-```{r}
-ggp <- ggplot(aes(x=as.factor(sanders_preference), y=age,
-                  fill=as.factor(sanders_preference)), 
-              data=publicopinion_narm)
-
-ggp+geom_violin()+geom_boxplot(width=0.33, fill="white")+
-  facet_grid(racefactor~genderfactor)+
-  scale_fill_discrete(name="Sanders Preference",
-                      labels=c("No", "Yes"))+
-  ggtitle("Age distribution split by Sanders preference\nseparated by gender and race")+
-  theme(plot.title = element_text(hjust = 0.5))
-```
-
-```{r}
-ggp <- ggplot(aes(x=as.factor(sanders_preference), y=age,
-                  fill=as.factor(sanders_preference)), 
-              data=publicopinion_narm)
-
-ggp+geom_violin()+geom_boxplot(width=0.33, fill="white")+
-  facet_grid(partyfactor~genderfactor)+
-  scale_fill_discrete(name="Sanders Preference",
-                      labels=c("No", "Yes"))+
-  ggtitle("Age distribution split by Sanders preference\nseparated by gender and party")+
-  theme(plot.title = element_text(hjust = 0.5))
-```
-
-
-```{r}
-ggp <- ggplot(aes(x=as.factor(sanders_preference), y=age,
-                  fill=as.factor(sanders_preference)), 
-              data=publicopinion_narm)
-
-ggp+geom_violin()+geom_boxplot(width=0.33, fill="white")+
-  facet_grid(partyfactor~racefactor)+
-  scale_fill_discrete(name="Sanders Preference",
-                      labels=c("No", "Yes"))+
-  ggtitle("Age distribution split by Sanders preference\nseparated by race and party")+
-  theme(plot.title = element_text(hjust = 0.5))
-```
-
-```{r}
-po_age_agg <- with(publicopinion_narm,
-                   aggregate(age, list(gender=genderfactor,
-                                       party=partyfactor,
-                                       sanders_preference=sanders_preference,
-                                       race=racefactor), mean))
-dodge = position_dodge(width=0.9)                   
-ggp <- ggplot(po_age_agg, aes(x=as.factor(sanders_preference), y=x, group=gender))
-ggp + 
-  geom_bar(stat="identity", position=dodge, color="black", aes(fill=gender))+
-  facet_wrap(race~party)+ylab("Age")+ggtitle("Mean age for all subgroups")+
-  theme(plot.title=element_text(hjust=.5))
-
-```
+Republicans, who make up 23% of the sample, are slightly underrepresented compared to Democrats and Other, but not to the extent that we should be worried about sampling bias. A slight majority (55%) of Democrats polled preferred Clinton to Sanders, while a majority of Republicans (64%) and Other (66%) preferred Sanders. This difference supports including party as an explanatory variable.
 
 ```{r}
 age_bin_agg_party <- with(publicopinion_narm,
                         aggregate(cbind(sanders_preference),
-                                  list(agebin=5*round(age/5), 
+                                  list(agebin=age, 
                                        party=partyfactor), mean))
-
 age_bin_agg_party$n <- with(publicopinion_narm,
                         aggregate(cbind(sanders_preference),
-                                  list(agebin=5*round(age/5), 
+                                  list(agebin=age, 
                                        party=partyfactor), length))[,3]
 
 ggp <- ggplot(age_bin_agg_party, aes(x=agebin, y=sanders_preference,
@@ -130,74 +116,36 @@ ggp <- ggplot(age_bin_agg_party, aes(x=agebin, y=sanders_preference,
 ggp + geom_point(aes(color=party))+
   geom_smooth(method="loess", se=F)+
   ylab("Percent with Sanders preference")+
-  xlab("Age (divided into 5-year bins)")+
-  ggtitle("Sanders preference grouped by age bins\n(divided by party)")+
-  theme(plot.title=element_text(hjust=.5))
-```
-
-```{r}
-age_bin_agg_gender <- with(publicopinion_narm,
-                        aggregate(cbind(sanders_preference),
-                                  list(agebin=5*round(age/5), 
-                                       gender=genderfactor), mean))
-
-age_bin_agg_gender$n <- with(publicopinion_narm,
-                        aggregate(cbind(sanders_preference),
-                                  list(agebin=5*round(age/5), 
-                                       gender=genderfactor), length))[,3]
-
-ggp <- ggplot(age_bin_agg_gender, aes(x=agebin, y=sanders_preference,
-                                     color=gender, size=n))
-
-ggp + geom_point(aes(color=gender))+
-  geom_smooth(method="loess", se=F)+
-  ylab("Percent with Sanders preference")+
-  xlab("Age (divided into 5-year bins)")+
-  ggtitle("Sanders preference grouped by age bins\n(divided by gender)")+
-  theme(plot.title=element_text(hjust=.5))
-```
-
-```{r}
-age_bin_agg_race <- with(publicopinion_narm,
-                        aggregate(cbind(sanders_preference),
-                                  list(agebin=5*round(age/5), 
-                                       race=racefactor), mean))
-age_bin_agg_race$n <- with(publicopinion_narm,
-                        aggregate(cbind(sanders_preference),
-                                  list(agebin=5*round(age/5), 
-                                       race=racefactor), length))[,3]
-
-ggp <- ggplot(age_bin_agg_race, aes(x=agebin, y=sanders_preference,
-                                     color=race, size=n))
-
-ggp + geom_point(aes(color=race))+
-  geom_smooth(method="loess", se=F)+
-  ylab("Percent with Sanders preference")+
-  xlab("Age (divided into 5-year bins)")+
-  ggtitle("Sanders preference grouped by age bins\n(divided by race)")+
-  theme(plot.title=element_text(hjust=.5))
-```
-
-```{r}
-age_bin_agg_race <- with(publicopinion_narm,
-                        aggregate(cbind(sanders_preference),
-                                  list(agebin=age, 
-                                       race=racefactor), mean))
-age_bin_agg_race$n <- with(publicopinion_narm,
-                        aggregate(cbind(sanders_preference),
-                                  list(agebin=age, 
-                                       race=racefactor), length))[,3]
-
-ggp <- ggplot(age_bin_agg_race, aes(x=agebin, y=sanders_preference,
-                                     color=race, size=n))
-
-ggp + geom_point(aes(color=race))+
-  geom_smooth(method="loess", se=F)+
-  ylab("Percent with Sanders preference")+
   xlab("Age")+
-  ggtitle("Sanders preference grouped by age\n(divided by race)")+
+  ggtitle("Sanders preference grouped by age\n(divided by party)")+
   theme(plot.title=element_text(hjust=.5))
 ```
+
+Above is a scatterplot of age on the x-axis, where color represents the political party. Each dot's position on the y-axis represents the percent of people of that specific party and age that preferred Sanders. 
+
+The democrats seem to have a fairly clear relationship with age in that younger democrats look more likely to support Sanders than older ones. The relationship within Republicans is less clear, and for independents, it looks almost quadratic (as the smooth curve lifts upwards both for younger and older voters). The curves are loess smoothed curves and not meant to be a perfect representation of overall trends. However, there is still enough evidence to support at least trying to model an age by party interaction, since it looks like different parties may have different relationships with age.
+
+
+
+###Gender
+
+```{r}
+po_gender_agg <- with(publicopinion_narm,
+                     aggregate(cbind(100*sanders_preference),
+                               list(genderfactor=genderfactor),
+                               mean))
+po_gender_agg$n <- with(publicopinion_narm,
+                     aggregate(cbind(100*sanders_preference),
+                               list(genderfactor=genderfactor),
+                               length))[,2]
+
+po_gender_df <- data.frame(sanders_pref_percent=po_gender_agg$V1,
+                          party=po_gender_agg$genderfactor, 
+                          sample_percent = 100*po_gender_agg$n/1191)
+po_gender_df
+```
+
+Male and female voters are close to equally represented, both around 50%. Across the sample male and female voters prefer Sanders at almost the same rate (57.5% for male, 57.7% for female)
 
 ```{r}
 age_bin_agg_gender <- with(publicopinion_narm,
@@ -220,23 +168,152 @@ ggp + geom_point(aes(color=gender))+
   theme(plot.title=element_text(hjust=.5))
 ```
 
+
+Towards the younger end of the age range, it seems like the negative relationship between sanders preference and age exists mostly for female voters and not so much for male voters. This suggests that investigating a gender by age interaction may be useful.
+
+###Race
+
 ```{r}
-age_bin_agg_party <- with(publicopinion_narm,
+po_race_agg <- with(publicopinion_narm,
+                     aggregate(cbind(100*sanders_preference),
+                               list(racefactor=racefactor),
+                               mean))
+po_race_agg$n <- with(publicopinion_narm,
+                     aggregate(cbind(100*sanders_preference),
+                               list(racefactor=racefactor),
+                               length))[,2]
+
+po_race_df <- data.frame(sanders_pref_percent=po_race_agg$V1,
+                          party=po_race_agg$racefactor, 
+                          sample_percent = 100*po_race_agg$n/1191)
+po_race_df
+```
+
+White voters make up about 73% of the sample, which is close to the estimated percentage of White people in America, which further supports our sample being representative. There is a large difference between how many white voters (64%) vs. non-whie voters (41%) prefer Sanders.
+
+
+```{r}
+age_bin_agg_race <- with(publicopinion_narm,
                         aggregate(cbind(sanders_preference),
                                   list(agebin=age, 
-                                       party=partyfactor), mean))
-age_bin_agg_party$n <- with(publicopinion_narm,
+                                       race=racefactor), mean))
+age_bin_agg_race$n <- with(publicopinion_narm,
                         aggregate(cbind(sanders_preference),
                                   list(agebin=age, 
-                                       party=partyfactor), length))[,3]
+                                       race=racefactor), length))[,3]
 
-ggp <- ggplot(age_bin_agg_party, aes(x=agebin, y=sanders_preference,
-                                     color=party, size=n))
+ggp <- ggplot(age_bin_agg_race, aes(x=agebin, y=sanders_preference,
+                                     color=race, size=n))
 
-ggp + geom_point(aes(color=party))+
+ggp + geom_point(aes(color=race))+
   geom_smooth(method="loess", se=F)+
   ylab("Percent with Sanders preference")+
   xlab("Age")+
-  ggtitle("Sanders preference grouped by age\n(divided by party)")+
+  ggtitle("Sanders preference grouped by age\n(divided by race)")+
   theme(plot.title=element_text(hjust=.5))
+```
+
+At first glance the relationship seems very different for non-white voters, but this may be an artifact of the loess smoothing curve attempting to compensate for the data points in the youngest age groups. When looking at the overall distribution of the dots it seems that both white and non-white voters have a negative relationship with age.
+
+
+
+
+
+
+
+##Question 1c: Based on your EDA, describe other models that you might have considered and why you ended up choosing your ???nal model. Be sure to print each of the model results and any statistical tests you used to choose which model to use. 
+
+
+In our EDA, we determined that race and party had large effects on Sanders preference and would be important to control for. Gender did not seem like it had much explanatory power on its own, although a gender by age interaction seemed plausible. A race by age interacton also looked to be worth testing. Finally, we wanted to test the plausability of a quadratic age term.
+
+###Gender by age interaction
+
+```{r}
+glm.out.base <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+glm.out.int <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor + age:genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+
+summary(glm.out.base)
+summary(glm.out.int)
+```
+
+
+###Party by age interaction
+
+```{r}
+glm.out.base <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+glm.out.int <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor + age:partyfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+
+summary(glm.out.base)
+```
+
+```{r}
+summary(glm.out.int)
+```
+
+There are a number of reasons that modeling an age by party interaction does not seem like a good idea. First of all, neither of the interacton terms (age:Other, age:Republican) have large effects. Their coefficients are relatively small compared to the original coefficient of the age term, and their p-values are nowhere near statistical significance (p > .33). The AIC for the model with the interaction term is larger than for the model without it, suggesting that our additional model complexity is not helping the overall model.
+
+```{r}
+anova(glm.out.base, glm.out.int, test="LR")
+```
+
+The likelihood ratio test, with a p-value of .53, also suggests our interaction model is not more useful than the simpler model. For these reasons we decided to not model an age by party interaction.
+
+###Quadratic age term
+
+
+```{r}
+glm.out.base <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+glm.out.quad <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor + I(age^2), data=publicopinion_narm,
+                 family=binomial(link='logit'))
+
+summary(glm.out.base)
+```
+
+```{r}
+summary(glm.out.quad)
+```
+
+```{r}
+anova(glm.out.base, glm.out.quad, test="LR")
+```
+
+Like the EDA showed, the model is showing that a quadratic age term might be plausible. The significance of the term in the model is slightly larger than .05 (.06), as is the signifiance of the likelihood ratio test (.06). The AIC of the model with the quadratic term is also lower.
+
+However, we decided to not to include the quadratic age term in the end. Aside from the lack of statistical significance - although it is close - the main reason for this is the lack of representation in the older age range that is driving this result. We would not feel comfortable recommending this model and suggesting that older voters be targeted when we have so few older people that are contributing to this trend.
+
+
+
+
+
+```{r}
+glm.out <- glm(sanders_preference ~ age+partyfactor+racefactor,
+               data=publicopinion_narm,
+               family=binomial(link="logit"))
+summary(glm.out)
+```
+ 
+```{r}
+glm.out$coefficients
+```
+```{r}
+a = c(20:100)
+y = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a)/
+       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a))
+        
+
+```
+
+```{r}
+plot(a, y)
 ```
