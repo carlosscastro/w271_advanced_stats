@@ -536,7 +536,21 @@ ggp + geom_point()+
   theme(plot.title=element_text(hjust=.5))
 ```
 
+The above plots show the original data with a bubble for every age group, with each color representing a different political party. For the sake of not having crowded graphs we've separated the white and non-white voters into two different graphs. 
+
+Because our final model did not include interaction terms, all 6 lines - i.e. the models' predictions for each subgroup - are parallel. The model predicts the same age-preference relationship for all subgroups, and based on the subgroups boosts or lowers the probability (other > republican > democrat, and white > non-white)
+
 
 
 # 3 Comment on Importance of Age and Client recommendation
 
+
+
+
+The results of the model and the graphs can help inform our client on who to target for this marketing campaign. The model does suggest that younger voters are more likely to support Sanders, as each 10 year decrease in age corresponds to a 1.13 increase in the odds of supporting Sanders. 
+
+The significant differences in supporting Sanders when looking at diferent party affiliations and races can help our client arrive at more targeted campaigns. Non-white Democrats appear to be the group least likely to support Sanders, as our model predicts them to have a less than 50% probability of supporting Sanders even at their youngest age range. (A 20 year old non-white Democrat is predicted to have a 41.0% chance of supporting Sanders). Non-white voters of other parties are also less likely to support Sanders than white voters, but our model does predict rates above 50% once you get below a certain age (Non-white Republicans age 39 and younger, as well as Non-white Other/Independents age 48 and younger are predicted to support Sanders with a probability greater than 50%)
+
+Our client should attempt to target white voters who, across the sample, see an increase of 2.39 in odds of supporting Sanders compared to non-white voters. Our model predicts that white Republicans and Other/Independents have a greater than 50% chance of supporting Sanders across all age groups. For white Democrats, it appears that voters of age 61 and less are more than 50% likely to support Sanders.
+
+All that being said, if our client is interested in targeting voters who, broadly speaking, support politically liberal candidates, these recommendations need to be taken with a grain of salt. Our model shows that Republicans are far more likely to prefer Sanders than Democrats. However, given the nature of the question and the typical stance of Republican voters, this is likely more due to being against Clinton than supporting Sanders. It would likely be unwise to target Republicans in a campaign for liberal merchandise despite what these data suggest. Independent voters would likely be a good target. And as the model suggests, younger voters are definitely more likely to prefer Sanders. Our model predictions are able to provide ages within each subgroup where the chance of preferring Sanders rises above 50%, which could be natural cutoffs for a targeted marketing campaign.
