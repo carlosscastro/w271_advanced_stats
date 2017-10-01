@@ -195,6 +195,29 @@ po_party_df
 ```
 
 Republicans, who make up 23% of the sample, are slightly underrepresented compared to Democrats and Other, but not to the extent that we should be worried about sampling bias. A slight majority (55%) of Democrats polled preferred Clinton to Sanders, while a majority of Republicans (64%) and Other (66%) preferred Sanders. This difference supports including party as an explanatory variable.
+```{r}
+age_bin_agg_party <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       party=partyfactor), mean))
+age_bin_agg_party$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       party=partyfactor), length))[,3]
+
+ggp <- ggplot(age_bin_agg_party, aes(x=agebin, y=sanders_preference,
+                                     color=party, size=n))
+
+ggp + geom_point(aes(color=party))+
+  geom_smooth(method="loess", se=F)+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Sanders preference grouped by age\n(divided by party)")+
+  theme(plot.title=element_text(hjust=.5))
+```
+Above is a scatterplot of age on the x-axis, where color represents the political party. Each dot's position on the y-axis represents the percent of people of that specific party and age that preferred Sanders. 
+
+The democrats seem to have a fairly clear relationship with age in that younger democrats look more likely to support Sanders than older ones. The relationship within Republicans is less clear, and for independents, it looks almost quadratic (as the smooth curve lifts upwards both for younger and older voters). The curves are loess smoothed curves and not meant to be a perfect representation of overall trends. However, there is still enough evidence to support at least trying to model an age by party interaction, since it looks like different parties may have different relationships with age.
 ## Race
 ```{r}
 ggplot(public.opinion, aes(race_white, age)) +
@@ -221,6 +244,28 @@ po_race_df <- data.frame(sanders_pref_percent=po_race_agg$V1,
 po_race_df
 ```
 White voters make up about 73% of the sample, which is close to the estimated percentage of White people in America, which further supports our sample being representative. There is a large difference between how many white voters (64%) vs. non-whie voters (41%) prefer Sanders.
+
+```{r}
+age_bin_agg_race <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       race=racefactor), mean))
+age_bin_agg_race$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       race=racefactor), length))[,3]
+
+ggp <- ggplot(age_bin_agg_race, aes(x=agebin, y=sanders_preference,
+                                     color=race, size=n))
+
+ggp + geom_point(aes(color=race))+
+  geom_smooth(method="loess", se=F)+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Sanders preference grouped by age\n(divided by race)")+
+  theme(plot.title=element_text(hjust=.5))
+```
+At first glance the relationship seems very different for non-white voters, but this may be an artifact of the loess smoothing curve attempting to compensate for the data points in the youngest age groups. When looking at the overall distribution of the dots it seems that both white and non-white voters have a negative relationship with age.
 
 ## Gender
 ```{r}
@@ -249,7 +294,27 @@ po_gender_df
 ```
 
 Male and female voters are close to equally represented, both around 50%. Across the sample male and female voters prefer Sanders at almost the same rate (57.5% for male, 57.7% for female)
+```{r}
+age_bin_agg_gender <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       gender=genderfactor), mean))
+age_bin_agg_gender$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       gender=genderfactor), length))[,3]
 
+ggp <- ggplot(age_bin_agg_gender, aes(x=agebin, y=sanders_preference,
+                                     color=gender, size=n))
+
+ggp + geom_point(aes(color=gender))+
+  geom_smooth(method="loess", se=F)+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Sanders preference grouped by age\n(divided by gender)")+
+  theme(plot.title=element_text(hjust=.5))
+```
+Towards the younger end of the age range, it seems like the negative relationship between sanders preference and age exists mostly for female voters and not so much for male voters. This suggests that investigating a gender by age interaction may be useful.
 
 # 1.c Alternate models
 
