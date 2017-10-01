@@ -132,6 +132,11 @@ odds_rep <- exp(model.final$coefficients[5])
 odds_rep
 ```
 # 1.b EDA
+##Overview
+```{r}
+summary(publicopinion)
+```
+We are missing 9 responses to sanders preference, average preference for sanders is 57.6%, race_white is 72.9%
 
 ## Age
 ```{r}
