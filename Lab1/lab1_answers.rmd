@@ -87,7 +87,7 @@ Note: This dataset is modified from the 2016 American National Election Survey.
 library(ggplot2)
 theme_set(theme_bw())
 library(car)
-publicopinion <- read.csv('C:/Users/Samir/Documents/MIDS/StatsF17/lab 1/public_opinion.csv')
+publicopinion <- read.csv('public_opinion.csv')
 
 publicopinion$partyfactor <- ifelse(publicopinion$party==1, 'Democrat', 
                                     ifelse(publicopinion$party==2, 'Other', 
@@ -221,6 +221,45 @@ However, we decided to not to include the quadratic age term in the end. Aside f
 # 1.d Selected model results
 
 # 1.e Statistical Tests
+
+
+## Wald Test
+
+The summary of our model actually displays the statistics for the Wald Test. Recall that the Wald statistic is given by
+
+$$Z_0 = \frac{\hat{\beta_r - \beta_r}}{\sqrt{Var(\hat{\beta_r})}}$$
+
+We use this statistic to test the null hypothesis $H_0: \beta_r = 0$ versus the alternat hypothesis $H_a: \beta_r \ne 0$. 
+
+For large samples, this test statistic has an approximate standard normal distribution if the null hypothesis is true, and we reject the null hypothesis if the statistic value is unexpected for a standard normal distribution.
+
+Now, since the Walrd test statistic is provided automatically for each individual $\beta$ parameter, we summarize the model again with the purpose of analyzing the Wald statistics.
+
+```{r}
+summary(model.final)
+```
+
+We can observe that for each explanatory variable there is a hypothesis test, with its associated p-value. 
+
+For example, for the $age$ explanatory variable, we observe that the p-value is $0.000664$, which is highly statistically significant, so we can reject the null hypothesis $H_0$ that $\beta_{age} = 0$, which can be interpreted as there is sufficient statistical evidence to indicate that age has an effect on the probability of voters supporting Sanders. For the other explanatory variables we analogously reject the null hypotheses that their corresponding $\beta$ equal $0$, since all the statistics are highly statistically significant.
+
+## Likelihood Ratio Test
+
+We now perform likelihood ratio tests on our model. The LRT statistic is defined as
+
+$$\Lambda = \frac{\textrm{Maximum of likelihood function under H_0}}{\textrm{Maximum of likelihood function under H_0 or H_a}}$$
+
+The test, as with the Wald statistic, is for $H_0: \beta_r = 0$ versus $H_a: \beta_r \ne 0$.
+
+We then calculate $-2log(\Lambda)$, and if the null hypothesis is true, then $-2log(\Lambda)$ has an approximate $\chi^2_1$ distribution for a large sample.
+
+In R, we can perform the likelihood ratio test using the Anova function authored by Professor John Fox as part of the Car package. Below are the results of our test.
+
+```{r}
+Anova(model.final)
+```
+
+For example, for the $age$ explanatory variable, we obtain a statistically significant p-value 0.0006217, rejecting the null hypothesis that $\beta_{age} = 0$. For Race and Party we also obtained statistically significant p-values and we can also reject their null hypothesis, which means that there is evidence that each explanatory variable has an effect on the probability of voters supporting Sanders over Clinton.
 
 # 1.f Age Impact Interpretation
 
