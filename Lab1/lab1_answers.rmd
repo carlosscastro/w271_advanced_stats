@@ -270,39 +270,39 @@ For example, for the $age$ explanatory variable, we obtain a statistically signi
 #create different y values for each subgroup of party and race - 6 total
 #using the model predited probabilities for sanders_preference
 a = c(20:100)
-y_dem_nw = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a)/
-       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a))
+y_dem_nw = exp(model.final$coefficients[1] + model.final$coefficients[2]*a)/
+       (1+exp(model.final$coefficients[1] + model.final$coefficients[2]*a))
 
-y_oth_nw = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[3])/
-       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[3]))
+y_oth_nw = exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[3])/
+       (1+exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[3]))
 
-y_rep_nw = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[4])/
-       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[4]))
+y_rep_nw = exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[4])/
+       (1+exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[4]))
 
 
 
-y_dem_w = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                glm.out$coefficients[5])/
-       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                glm.out$coefficients[5]))
+y_dem_w = exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                model.final$coefficients[5])/
+       (1+exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                model.final$coefficients[5]))
 
-y_oth_w = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[3] +
-                glm.out$coefficients[5])/
-       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[3] +
-                glm.out$coefficients[5]))
+y_oth_w = exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[3] +
+                model.final$coefficients[5])/
+       (1+exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[3] +
+                model.final$coefficients[5]))
 
-y_rep_w = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[4] +
-                glm.out$coefficients[5])/
-       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
-                 glm.out$coefficients[4] +
-                glm.out$coefficients[5]))
+y_rep_w = exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[4] +
+                model.final$coefficients[5])/
+       (1+exp(model.final$coefficients[1] + model.final$coefficients[2]*a +
+                 model.final$coefficients[4] +
+                model.final$coefficients[5]))
         
 
 ```
