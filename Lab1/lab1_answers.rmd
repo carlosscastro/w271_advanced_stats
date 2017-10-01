@@ -87,7 +87,7 @@ Note: This dataset is modified from the 2016 American National Election Survey.
 library(ggplot2)
 theme_set(theme_bw())
 library(car)
-publicopinion <- read.csv('C:/Users/Samir/Documents/MIDS/StatsF17/lab 1/public_opinion.csv')
+publicopinion <- read.csv('public_opinion.csv')
 
 publicopinion$partyfactor <- ifelse(publicopinion$party==1, 'Democrat', 
                                     ifelse(publicopinion$party==2, 'Other', 
