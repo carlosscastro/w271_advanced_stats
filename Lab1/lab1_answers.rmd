@@ -101,7 +101,36 @@ publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
 ```
 
 # 1.a Model
+Model Overview
+The model looks at the likelihood of supporting bernie sanders based on 4 explanatory variables. The three explantory variables are age as of 2017, race_white (non white vs. white), independent voter (baseline democrat), republican (baseline democrat).  
 
+Age
+The age variable was caculated as of 2017 based off the birth year variable in the original dataset. Age has a negative coefficient which is statistically significant showing that an increase in age reduces the likelihood of supporting sanders.  The odds_age object shows that for every 10 years decrease in age we see a ~1.13 increase in the odds of supporting sanders. 
+
+Racefactor
+Racefactor = 0 is non white, race_white = 1 is white. Racefator has a positive coefficient in our model that is statistically significant.  Looking at the odds ratios we see that being white increases odds of supporting sanders by 2.39 holding all other variables constant.  
+
+Partyfactor
+Both the independent and republican variables have statistically significant positive coefficients.  This shows that have either party affiliation versus democrat would increase the probability of supporting sanders.  A look at the odds ratio shows an odds increase of 2.04 for independents and 1.81 for republicans. 
+
+```{r}
+#Section 1a.
+model.final <- glm(sanders_preference ~ age + racefactor + partyfactor, data = publicopinion, family = binomial(link = logit))
+
+summary(model.final)
+
+odds_age <- exp(model.final$coefficients[2]*-10)
+odds_age
+
+odds_white<- exp(model.final$coefficients[3])
+odds_white
+
+odds_ind <- exp(model.final$coefficients[4])
+odds_ind
+
+odds_rep <- exp(model.final$coefficients[5])
+odds_rep
+```
 # 1.b EDA
 
 ## Age
