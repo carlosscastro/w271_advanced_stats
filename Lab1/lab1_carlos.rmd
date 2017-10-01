@@ -273,17 +273,160 @@ Anova(mod = model, test = "LR")
 Anova(mod = model, test = "LR")
 ```
 
-
 ```{r}
-w <- aggregate(formula = sanders_preference ~ age + race_white + party.name, data = public.opinion, FUN = sum)
+w <- aggregate(formula = sanders.preference ~ age + race_white + party.name, data = public.opinion, FUN = sum)
 
-n <- aggregate(formula = sanders_preference ~ age + race_white + party.name, data = public.opinion, FUN = length)
+n <- aggregate(formula = sanders.preference ~ age + race_white + party.name, data = public.opinion, FUN = length)
 
-w.n <- data.frame(age = w$age, success = w$sanders_preference, trials = n$sanders_preference, proportion = round(w$sanders_preference/n$sanders_preference, 4))
+w.n <- data.frame(age = w$age, success = w$sanders.preference, trials = n$sanders.preference, proportion = round(w$sanders.preference/n$sanders.preference, 4))
 head(w.n)
 
-win.graph(width = 7, height = 6, pointsize = 12)
-plot(x = w$age, y = )
+#win.graph(width = 7, height = 6, pointsize = 12)
+#plot(x = w$age, y = w$sanders.preference/n$sanders.preference)
+symbols(x = W$age)
 
 ```
+
+
+```{r}
+
+pred <- predict(model.simple, public.opinion, type = "response")
+```
+
+```{r}
+pred
+```
+
+```{r}
+public.opinion$age.bin <- public.opinion$age %% 5
+
+
+w <- aggregate(formula = sanders.preference ~ age.bin + race_white + party.name, data = public.opinion, FUN = sum)
+
+n <- aggregate(formula = sanders.preference ~ age.bin + race_white + party.name, data = public.opinion, FUN = length)
+
+w.n <- data.frame(age = w$age.bin, success = w$sanders.preference, trials = n$sanders.preference, proportion = round(w$sanders.preference/n$sanders.preference, 4))
+w.n
+
+#win.graph(width = 7, height = 6, pointsize = 12)
+plot(x = public.opinion$age, y =pred)
+
+```
+
+
+```{r}
+curve(expr = predict(object = model.simple, newdata = data.frame(age = x, race_white = factor(0), party.name = 'Democrat' ), type = "response"), col = "red", lty = "solid", xlim = c(-100,100),
+ylim = c(0,1), ylab = "Estimated probability", main = "Predicted Probabilities",
+xlab = "Age", panel.first = grid(col = "gray", lty = "solid"), cex.main = 0.9, lwd = 1)
+
+curve(expr = predict(object = model.simple, newdata = data.frame(age = x, race_white = factor(1), party.name = 'Democrat'), type = "response"),col = "green", lty = "solid", lwd = 1, add = TRUE)
+
+curve(expr = predict(object = model.simple, newdata = data.frame(age = x, race_white = factor(1), party.name = 'Independent'), type = "response"),col = "blue", lty = "solid", lwd = 1, add = TRUE)
+
+curve(expr = predict(object = model.simple, newdata = data.frame(age = x, race_white = factor(0), party.name = 'Independent'), type = "response"),col = "black", lty = "solid", lwd = 1, add = TRUE)
+
+curve(expr = predict(object = model.simple, newdata = data.frame(age = x, race_white = factor(1), party.name = 'Republican'), type = "response"),col = "orange", lty = "solid", lwd = 1, add = TRUE)
+
+
+curve(expr = predict(object = model.simple, newdata = data.frame(age = x, race_white = factor(0), party.name = 'Republican'), type = "response"),col = "purple", lty = "solid", lwd = 1, add = TRUE)
+
+legend(x = 20, y = 0.4, legend = c("Non-White Democrat", "White Democrat", "Non-white Independet", "White independent", "Non-white republican", "White Republican"), lty = c("solid", "solid"), col = c("red", "green", "blue", "black", "orange"), lwd = c(1,1), bty = "n")
+
+```
+
+\newpage
+
+
+1. Model the relationship between age and voters' preference for Bernie Sanders over Hillary Clinton. Select the model that you prefer the most and describe why you chose these variables and functional form. 
+
+    a. Describe your chosen model in words, along with a brief description of the variables and the model's functional form (*Note: You do not have to justify your choices at this step*).
+
+    b. Describe the variables your have included in your model and justify why you chose these variables and the model's functional form. (*Hint: you will have to conduct a very careful EDA and use insights generated from the EDA to support your modeling decision. DO NOT USE OUTPUT-DUMP, meaning do not just print a bunch of graphs and let us interpret the graphs for you. Choose your graphs/tables very selectively and present them with narratives to suppor your modeling decisions.*)
+
+    c. Based on your EDA, describe other models that you might have considered and why you ended up choosing your final model. Be sure to print each of the model results and any statistical tests you used to choose which model to use.
+
+    d. Print the model results of your chosen model, even if you did so earlier.
+
+    e. Conduct all of the relevant statistical tests on your chosen model.
+
+    f. Interpret the impact of age on the dependent variable using odds ratios and be sure to include confidence intervals.
+
+
+2. For your chosen model, graph the relationship between age and the predicted probabilty of supporting Sanders. Be sure to include any graphs that helps you understand how your model can help you answer the question at hand.
+
+3. Comment on the importance of age and evaluate your client's decision to target younger voters.
+
+
+\newpage
+
+# 1.a Model
+
+Our model captures the relationship between age and voters' preference for Bernie Sanders over Hilary Clinton, influenced also by information such as 
+the voter's political party and race. The political party can be Republican, Democrat or Independent, while the race is only segregated as white and non-white, since that is the granularity of the data we have available for analysis.
+
+The following is the model functional form:
+
+$$logit(\hat{\pi}) = -0.114017 - 0.01248 age + 0.872782 race.white1 + 0.713501 party.nameIndependent + 0.594231 party.nameRepublican$$
+
+
+# 1.b EDA
+
+In the following sections we analyze the public opinion dataset in order to understand the different variables, their relations, and how they can help us model the voters' preference for Bernie over Hilary.
+
+## Data Loading and Cleansing
+
+First, we load required libraries and the data, and transform categorical or binary variables into factors. For some variables like the Party, we choose to change them from $1$, $2$ and $3$ to *Democrat*, *Independent* and *Republican* respectively, which helps make the analysis more interpretable.
+
+```{r}
+
+# Load libraries
+library(readr)
+library(car)
+require(dplyr)
+
+# Load data from Csv
+public.opinion <- data.frame(read_csv("public_opinion.csv"))
+
+# Turn categorical / binary features to factors
+public.opinion$sanders.preference <- public.opinion$sanders_preference
+public.opinion$sanders_preference <- factor(public.opinion$sanders_preference)
+public.opinion$party <- factor(public.opinion$party)
+public.opinion$race_white <- factor(public.opinion$race_white)
+public.opinion$gender <- factor(public.opinion$gender)
+
+# Recode gender
+public.opinion$gender.name[public.opinion$gender == 1] <- "Male"
+public.opinion$gender.name[public.opinion$gender == 2] <- "Female"
+public.opinion$gender.name = factor(public.opinion$gender.name)
+
+# Recode birth year into age
+public.opinion$age <- 2017 - public.opinion$birthyr
+
+# Recode party
+public.opinion$party.name[public.opinion$party == 1] <- "Democrat"
+public.opinion$party.name[public.opinion$party == 2] <- "Independent"
+public.opinion$party.name[public.opinion$party == 3] <- "Republican"
+public.opinion$party.name = factor(public.opinion$party.name)
+
+```
+
+## Age
+
+## Party
+
+## Race
+
+## Gender
+
+# 1.c Alternate models
+
+# 1.d Selected model results
+
+# 1.e Statistical Tests
+
+# 1.f Age Impact Interpretation
+
+# 2 Plot: Age vs Predicted probability of supporting Sanders
+
+# 3 Comment on Importance of Age and Client recommendation
 
