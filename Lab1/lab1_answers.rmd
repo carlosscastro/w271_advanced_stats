@@ -83,6 +83,23 @@ Note: This dataset is modified from the 2016 American National Election Survey.
 
 \newpage
 
+```{r}
+library(ggplot2)
+theme_set(theme_bw())
+library(car)
+publicopinion <- read.csv('C:/Users/Samir/Documents/MIDS/StatsF17/lab 1/public_opinion.csv')
+
+publicopinion$partyfactor <- ifelse(publicopinion$party==1, 'Democrat', 
+                                    ifelse(publicopinion$party==2, 'Other', 
+                                           'Republican'))
+
+publicopinion$age <- 2017 - publicopinion$birthyr
+publicopinion$genderfactor <- ifelse(publicopinion$gender==1,'Male', 'Female')
+publicopinion$racefactor <- ifelse(publicopinion$race_white==1, 'White', 'Non-White')
+publicopinion$spfactor <- ifelse(publicopinion$sanders_preference==1, "Yes", "No")
+publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
+```
+
 # 1.a Model
 
 # 1.b EDA
@@ -96,6 +113,81 @@ Note: This dataset is modified from the 2016 American National Election Survey.
 ## Gender
 
 # 1.c Alternate models
+
+In our EDA, we determined that race and party had large effects on Sanders preference and would be important to control for. Gender did not seem like it had much explanatory power on its own, although a gender by age interaction seemed plausible. A race by age interacton also looked to be worth testing. Finally, we wanted to test the plausability of a quadratic age term.
+
+###Gender by age interaction
+
+```{r}
+glm.out.base <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+glm.out.int <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor + age:genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+
+summary(glm.out.base)
+```
+```{r}
+summary(glm.out.int)
+```
+
+```{r}
+anova(glm.out.base, glm.out.int, test="LR")
+```
+
+We noticed that the statistical significance of the age term got slightly stronger in the interaction model than in the base model. In the base model, the coefficient for age represented the relationship between age and Sanders preference across the sampl. In the interaction model, it represents the relationship for the base level of gender only, which is female. The coefficient of the interaction term is .011, which means the coefficient for age in males only would be -.018 + .011 = -.007. We can interpret this to mean that the model is suggesting there is a strong negative relationship for female voters but not male voters.
+
+We have decided against this model for a few reasons. First of all, we know from looking at the data and at both models that the effect of gender is very small. Second of all, the p-values given to the interaction term and the likelihood ratio test are not statistically significant even at p < 0.1. This tells us that although there may be a hint of a gender interaction term it isn't strong enough to justify including it in our final model.
+
+###Party by age interaction
+
+```{r}
+glm.out.base <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+glm.out.int <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor + age:partyfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+
+summary(glm.out.base)
+```
+```{r}
+summary(glm.out.int)
+```
+
+There are a number of reasons that modeling an age by party interaction does not seem like a good idea. First of all, neither of the interacton terms (age:Other, age:Republican) have large effects. Their coefficients are relatively small compared to the original coefficient of the age term, and their p-values are nowhere near statistical significance (p > .33). The AIC for the model with the interaction term is larger than for the model without it, suggesting that our additional model complexity is not helping the overall model.
+
+```{r}
+anova(glm.out.base, glm.out.int, test="LR")
+```
+
+The likelihood ratio test, with a p-value of .53, also suggests our interaction model is not more useful than the simpler model. For these reasons we decided to not model an age by party interaction.
+
+###Quadratic age term
+
+```{r}
+glm.out.base <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor, data=publicopinion_narm,
+                 family=binomial(link='logit'))
+glm.out.quad <- glm(sanders_preference ~ age + partyfactor + racefactor + 
+                 genderfactor + I(age^2), data=publicopinion_narm,
+                 family=binomial(link='logit'))
+
+summary(glm.out.base)
+```
+
+```{r}
+summary(glm.out.quad)
+```
+
+```{r}
+anova(glm.out.base, glm.out.quad, test="LR")
+```
+
+Like the EDA showed, the model is showing that a quadratic age term might be plausible. The significance of the term in the model is slightly larger than .05 (.06), as is the signifiance of the likelihood ratio test (.06). The AIC of the model with the quadratic term is also lower.
+
+However, we decided to not to include the quadratic age term in the end. Aside from the lack of statistical significance - although it is close - the main reason for this is the lack of representation in the older age range that is driving this result. We would not feel comfortable recommending this model and suggesting that older voters be targeted when we have so few older people that are contributing to this trend.
 
 # 1.d Selected model results
 
