@@ -265,5 +265,102 @@ For example, for the $age$ explanatory variable, we obtain a statistically signi
 
 # 2 Plot: Age vs Predicted probability of supporting Sanders
 
+```{r}
+#create variable a to represent ages 20 to 100
+#create different y values for each subgroup of party and race - 6 total
+#using the model predited probabilities for sanders_preference
+a = c(20:100)
+y_dem_nw = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a)/
+       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a))
+
+y_oth_nw = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[3])/
+       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[3]))
+
+y_rep_nw = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[4])/
+       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[4]))
+
+
+
+y_dem_w = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                glm.out$coefficients[5])/
+       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                glm.out$coefficients[5]))
+
+y_oth_w = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[3] +
+                glm.out$coefficients[5])/
+       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[3] +
+                glm.out$coefficients[5]))
+
+y_rep_w = exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[4] +
+                glm.out$coefficients[5])/
+       (1+exp(glm.out$coefficients[1] + glm.out$coefficients[2]*a +
+                 glm.out$coefficients[4] +
+                glm.out$coefficients[5]))
+        
+
+```
+
+```{r}
+age_bin_agg_all <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       party=partyfactor,
+                                       race=racefactor), mean))
+age_bin_agg_all$n <- with(publicopinion_narm,
+                        aggregate(cbind(sanders_preference),
+                                  list(agebin=age, 
+                                       party=partyfactor,
+                                       race=racefactor), length))[,4]
+```
+
+```{r}
+#plot data and predictions for white voters
+ggp <- ggplot(age_bin_agg_all[age_bin_agg_all$race=="White",], aes(x=agebin, y=sanders_preference,
+                                     color=party, size=n))
+
+ggp + geom_point()+
+  geom_path(inherit.aes=F, data=data.frame(x=a, y=y_dem_w),
+             aes(x = a, y = y), color="blue")+
+  geom_path(inherit.aes=F, data=data.frame(x=a, y=y_oth_w),
+             aes(x = a, y = y), color="green")+
+    geom_path(inherit.aes=F, data=data.frame(x=a, y=y_rep_w),
+             aes(x = a, y = y), color="red")+
+  #facet_grid(party~.)+
+  scale_color_manual(values=c("blue", "green", "red"))+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Model predictions for age vs. Sanders preference\nfor white voters, grouped by party")+
+  theme(plot.title=element_text(hjust=.5))
+```
+
+```
+#plot data and prediction for non-white voters
+ggp <- ggplot(age_bin_agg_all[age_bin_agg_all$race=="Non-White",], aes(x=agebin, y=sanders_preference,
+                                     color=party, size=n))
+
+ggp + geom_point()+
+  geom_path(inherit.aes=F, data=data.frame(x=a, y=y_dem_nw),
+             aes(x = a, y = y), color="blue")+
+  geom_path(inherit.aes=F, data=data.frame(x=a, y=y_oth_nw),
+             aes(x = a, y = y), color="green")+
+    geom_path(inherit.aes=F, data=data.frame(x=a, y=y_rep_nw),
+             aes(x = a, y = y), color="red")+
+  #facet_grid(party~.)+
+  scale_color_manual(values=c("blue", "green", "red"))+
+  ylab("Percent with Sanders preference")+
+  xlab("Age")+
+  ggtitle("Model predictions for age vs. Sanders preference\nfor non-white voters, grouped by party")+
+  theme(plot.title=element_text(hjust=.5))
+```
+
+
+
 # 3 Comment on Importance of Age and Client recommendation
 
