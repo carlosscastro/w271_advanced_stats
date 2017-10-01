@@ -87,6 +87,14 @@ Note: This dataset is modified from the 2016 American National Election Survey.
 
 # 1.b EDA
 
+## Age
+
+## Party
+
+## Race
+
+## Gender
+
 # 1.c Alternate models
 
 # 1.d Selected model results
