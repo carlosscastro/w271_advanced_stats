@@ -367,6 +367,27 @@ curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_wh
 legend(x = 20, y = 0.4, legend = c("Non White", "White"), lty = c("solid", "dotdash"), col = c("red", "blue"), lwd = c(1,1), bty = "n")
 
 ```
+```{r}
+# Function for C.I.s - need in order to use with curve function
+ci.pi<-function(newdata, mod.fit.obj, alpha){
+      # print(newdata)  # Test
+      linear.pred<-predict(object = mod.fit.obj, newdata = newdata, type = "link", se = TRUE)
+      CI.lin.pred.lower<-linear.pred$fit - qnorm(p = 1-alpha/2)*linear.pred$se
+      CI.lin.pred.upper<-linear.pred$fit + qnorm(p = 1-alpha/2)*linear.pred$se
+      CI.pi.lower<-exp(CI.lin.pred.lower) / (1 + exp(CI.lin.pred.lower))
+      CI.pi.upper<-exp(CI.lin.pred.upper) / (1 + exp(CI.lin.pred.upper))
+      list(lower = CI.pi.lower, upper = CI.pi.upper)
+}
+
+curve(expr = predict(object = model.final, newdata = data.frame(age = x, race_white = 0, partyfactor = 'Other'), type = "response"), col = "red", lty = "solid", xlim = c(20,90),
+ylim = c(0,1), ylab = "Estimated probability", main = "Independent Non White Sanders Probability by Age", xlab = "Age", panel.first = grid(col = "gray", lty = "dotted"), cex.main = 0.9, lwd = 1)
+
+curve(expr = ci.pi(newdata = data.frame(age = x, race_white = 0, partyfactor = 'Other'), mod.fit.obj = model.final, alpha = 0.05)$lower, col = "blue", lty = "dotdash", add = TRUE, xlim = c(20, 90))
+
+curve(expr = ci.pi(newdata = data.frame(age = x, race_white = 0, partyfactor = 'Other'), mod.fit.obj = model.final, alpha = 0.05)$upper, col = "blue", lty = "dotdash", add = TRUE, xlim = c(20, 90))
+
+legend(x = 20, y = 0.2, legend = c("Logitics Regression Model", "95% CI"), lty = c("solid", "dotdash"), col = c("red", "blue"), lwd = c(1,1), bty = "n")
+```
 
 3. Comment on the importance of age and evaluate your client's decision to target younger voters.
 Our investigation shows that there is a statistically significant effect on sanders voting preference when you change age.  For every 10 year decrease in age you increase the chance of voting for sanders by 1.13 times.  The client would be correct in targeting younder voters if this is the only information avialable to them.  Adding more variables we have the potetial to be more targeted in our campaign.  Specifcally we should avoid non white democrat voters whos likelihood to vote for sanders is below 50% for all age ranges.  Conversely the group with the highest likelihood to vote for sanders are white independent voters who have greater than 55% of voting for sanders across all age ranges.  We've also seen that white voters tend to prefer sanders much more than non white, with 2.39 times higher odds of voting for sanders.  Similary Independents and Republicans have much higher odds of supporting sanders with 2.04 and 1.18 times greater odds of supporting sanders compared with democrats.    
