@@ -48,65 +48,12 @@ public.opinion$party.name = factor(public.opinion$party.name)
 # Actually move this below the data cleansing or unify
 public.opinion <- public.opinion[complete.cases(public.opinion), ]
 
-summary(public.opinion[!is.na(public.opinion$sanders_preference)])
 
 # Show the first few rows
 head(public.opinion)
 
 str(public.opinion)
 
-```
-
-
-# Data Cleasing
-
-Below we verify limits, missing values and potential inconsistencies in the data, prior to diving into data analysis.
-
-## Data Cleansing: Party
-
-```{r}
-
-levels(public.opinion$party)
-describe(public.opinion$party)
-```
-
-Text: 3 levels, no missing values. 38.4% independent not in any party. 
-
-## Data Cleansing: Gender
-
-
-```{r}
-
-levels(public.opinion$gender)
-describe(public.opinion$gender)
-```
-
-## Data Cleansing: Race white
-
-```{r}
-
-levels(public.opinion$race_white)
-describe(public.opinion$race_white)
-```
-
-## Data Cleansing: Birth year
-
-```{r}
-
-describe(public.opinion$birthyr)
-
-ggplot(public.opinion, aes(x = birthyr)) +
-  geom_histogram(aes(y = ..density..), binwidth = 0.2, fill="#0072B2", colour="black") +
-  ggtitle("Birth Year") + 
-  theme(plot.title = element_text(lineheight=1, face="bold"))
-```
-
-## Data Cleansing: Sanders Preference
-
-```{r}
-
-levels(public.opinion$race_white)
-describe(public.opinion$race_white)
 ```
 
 # Data Analysis
