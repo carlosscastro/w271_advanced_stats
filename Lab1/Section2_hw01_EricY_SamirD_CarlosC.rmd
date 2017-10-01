@@ -453,7 +453,7 @@ For example, for the $age$ explanatory variable, we obtain a statistically signi
 
 First, let's obtain an expression for the effect in the odds of supporting Sanders caused by a $c$ year change in age. For this, we calculate the odds ratio:
 
-$$OR = \frac{Odds_{age+c}}{Odds_{age}} = \frac{e^{\beta_0 + \beta_{age} (age + c) + \beta_{race.white} race.white + \beta_{party.republican} party.republican + \beta_{party.independent} party.independent}}{e^{\beta_0 + \beta_{age} (age + c) + \beta_{race.white} race.white + \beta_{party.republican} party.republican + \beta_{party.independent} party.independent}}$$
+$$OR = \frac{Odds_{age+c}}{Odds_{age}} = \frac{e^{\beta_0 + \beta_{age} (age + c) + \beta_{race.white} race.white + \beta_{party.republican} party.republican + \beta_{party.independent} party.independent}}{e^{\beta_0 + \beta_{age} age + \beta_{race.white} race.white + \beta_{party.republican} party.republican + \beta_{party.independent} party.independent}}$$
 
 Which using the properties of exponentiation can be simplified to:
 
