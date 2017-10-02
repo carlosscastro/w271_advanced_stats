@@ -15,15 +15,21 @@ theme_set(theme_bw())
 library(car)
 publicopinion <- read.csv('public_opinion.csv')
 
+
+#create subset without issing values
+publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
+#create age variable
+publicopinion$age <- 2017 - publicopinion$birthyr
+#turn variables into factors
 publicopinion$partyfactor <- ifelse(publicopinion$party==1, 'Democrat', 
                                     ifelse(publicopinion$party==2, 'Other', 
                                            'Republican'))
 
-publicopinion$age <- 2017 - publicopinion$birthyr
+
 publicopinion$genderfactor <- ifelse(publicopinion$gender==1,'Male', 'Female')
 publicopinion$racefactor <- ifelse(publicopinion$race_white==1, 'White', 'Non-White')
 publicopinion$spfactor <- ifelse(publicopinion$sanders_preference==1, "Yes", "No")
-publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
+
 ```
 
 # 1.a Model
@@ -35,10 +41,10 @@ The model looks at the likelihood of supporting bernie sanders based on 4 explan
 The age variable was caculated as of 2017 based off the birth year variable in the original dataset. Age has a negative coefficient which is statistically significant showing that an increase in age reduces the likelihood of supporting sanders.  The odds_age object shows that for every 10 years decrease in age we see a ~1.13 increase in the odds of supporting sanders. 
 
 ## Racefactor
-Racefactor = 0 is non white, race_white = 1 is white. Racefator has a positive coefficient in our model that is statistically significant.  Looking at the odds ratios we see that being white increases odds of supporting sanders by 2.39 holding all other variables constant.  
+Racefactor = 0 is non white, racefactor = 1 is white. Racefator has a positive coefficient in our model that is statistically significant.  Looking at the odds ratios we see that being white increases odds of supporting sanders by 2.39 holding all other variables constant.  
 
 ## Partyfactor
-Both the independent and republican variables have statistically significant positive coefficients.  This shows that either party affiliation versus democrat would increase the probability of supporting sanders.  A look at the odds ratio shows an odds increase of 2.04 for independents and 1.81 for republicans. 
+Both the independent and republican variables have statistically significant positive coefficients.  This shows that either party affiliation versus democrat would increase the probability of supporting sanders.  A look at the odds ratio shows an odds increase of 2.04 for independents and 1.81 for republicans compared to democrats. For independents, the increase in odds of preferring Sanders is 1.13 when compared to republicans. 
 
 ```{r}
 #Section 1a.
@@ -207,7 +213,7 @@ ggplot(publicopinion, aes(genderfactor, age)) +
   ggtitle("Gender by Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold")) 
 ```
-In the dataset women skew towards an older age, median 52 versus 47 for males.  We should add age to control for it's effect in our model.
+In the dataset women skew towards an older age, median 52 versus 47 for males.  
 
 ```{r}
 po_gender_agg <- with(publicopinion_narm,
@@ -341,7 +347,7 @@ We use this statistic to test the null hypothesis $H_0: \beta_r = 0$ versus the 
 
 For large samples, this test statistic has an approximate standard normal distribution if the null hypothesis is true, and we reject the null hypothesis if the statistic value is unexpected for a standard normal distribution.
 
-Now, since the Walrd test statistic is provided automatically for each individual $\beta$ parameter, we summarize the model again with the purpose of analyzing the Wald statistics.
+Now, since the Wald test statistic is provided automatically for each individual $\beta$ parameter, we summarize the model again with the purpose of analyzing the Wald statistics.
 
 ```{r}
 summary(model.final)
@@ -381,13 +387,13 @@ Which using the properties of exponentiation can be simplified to:
 
 $$OR = e^{c \beta_{age}}$$
 
-For example, we can calculate the Odds Ratio for a $10$ year decrease in age by inverting the formula:
+For example, we can calculate the odds ratio for a $10$ year decrease in age by inverting the formula:
 
 ```{r}
 1 / exp(model.final$coefficients[2] * 10)
 ```
 
-This Odd Ratio can be interpreted as: the odds of supporting sanders are $1.132925$ times larger for every 10 year decrease in age of the voters.
+This odds ratio can be interpreted as: the odds of supporting sanders are $1.132925$ times larger for every 10 year decrease in age of the voters.
 
 ### Odds Ratios and Confidence Intervals
 
@@ -537,4 +543,4 @@ The significant differences in supporting Sanders when looking at diferent party
 
 Our client should attempt to target white voters who, across the sample, see an increase of 2.39 in odds of supporting Sanders compared to non-white voters. Our model predicts that white Republicans and Other/Independents have a greater than 50% chance of supporting Sanders across all age groups. For white Democrats, it appears that voters of age 61 and less are more than 50% likely to support Sanders.
 
-All that being said, if our client is interested in targeting voters who, broadly speaking, support politically liberal candidates, these recommendations need to be taken with a grain of salt. Our model shows that Republicans are far more likely to prefer Sanders than Democrats. However, given the nature of the question and the typical stance of Republican voters, this is likely more due to being against Clinton than supporting Sanders. It would likely be unwise to target Republicans in a campaign for liberal merchandise despite what these data suggest. Independent voters would likely be a good target. And as the model suggests, younger voters are definitely more likely to prefer Sanders. Our model predictions are able to provide ages within each subgroup where the chance of preferring Sanders rises above 50%, which could be natural cutoffs for a targeted marketing campaign.
+All that being said, if our client is interested in targeting voters who support politically liberal candidates, these recommendations need to be taken with a grain of salt. Our model shows that Republicans are far more likely to prefer Sanders than Democrats. However, given the typical stance of Republican voters, this is likely more due to being against Clinton than supporting Sanders. It would likely be unwise to target Republicans in a campaign for liberal merchandise despite what these data suggest. Independent voters would likely be a good group to target. Our model predictions are able to provide ages within each subgroup where the chance of preferring Sanders rises above 50%, which could be natural cutoffs for a targeted marketing campaign.
