@@ -338,6 +338,10 @@ However, we decided to not to include the quadratic age term in the end. Aside f
 
 # 1.d Selected model results
 
+```{r}
+summary(model.final)
+```
+
 # 1.e Statistical Tests
 
 In the subsections below we perform two statistical tests on our model: Wald test and Likelihood Ratio Test. 
