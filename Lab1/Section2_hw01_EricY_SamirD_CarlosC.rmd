@@ -69,7 +69,11 @@ odds_rep
 ```{r}
 summary(publicopinion)
 ```
-We are missing 9 responses to sanders preference, average preference for sanders is 57.6%, race_white is 72.9%
+```{r}
+publicopinion[is.na(publicopinion$sanders_preference),]
+```
+
+There are nine observations missing a value for the variable of interest sanders_preference. There does not appear to be any pattern to these missing values, which would suggest they are missing at random and not indicative of any sampling bias. We used this data ignoring these nine missing values which left us with a complete dataset. 
 
 ## Age
 ```{r}
@@ -79,7 +83,7 @@ ggplot(publicopinion, aes(x = age)) +
   ggtitle("Age") + 
   theme(plot.title = element_text(lineheight=1, face="bold"))
 ```
-Ages range from 20 to 96.  Peaks in the mid 60s and mid 40s and a dip in the 50s. 
+Ages range from 20 to 96.  Appears to have a bimodal distribution with peaks in the mid 60s and mid 40s and a dip in the 50s. 
 
 ```{r}
 
