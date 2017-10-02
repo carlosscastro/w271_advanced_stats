@@ -16,8 +16,8 @@ library(car)
 publicopinion <- read.csv('public_opinion.csv')
 
 
-#create subset without issing values
-publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
+#create subset without missing values
+
 #create age variable
 publicopinion$age <- 2017 - publicopinion$birthyr
 #turn variables into factors
@@ -29,7 +29,8 @@ publicopinion$partyfactor <- ifelse(publicopinion$party==1, 'Democrat',
 publicopinion$genderfactor <- ifelse(publicopinion$gender==1,'Male', 'Female')
 publicopinion$racefactor <- ifelse(publicopinion$race_white==1, 'White', 'Non-White')
 publicopinion$spfactor <- ifelse(publicopinion$sanders_preference==1, "Yes", "No")
-
+#create subset without missing values
+publicopinion_narm <- publicopinion[!is.na(publicopinion$sanders_preference),]
 ```
 
 # 1.a Model
