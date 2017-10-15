@@ -102,17 +102,6 @@ We'll use Hmisc package throughout this section.
 library(Hmisc)
 ```
 
-### X Variable
-
-```{r}
-
-describe(df$X) 
-
-```
-
-```{r}
-hist(df$X)
-```
 
 ### Gender Variable
 
@@ -317,7 +306,7 @@ summary(df)
 ```{r}
 library(package = nnet)
 
-mod.multinomial <- multinom(data = df, formula = FY16GivingCat ~ X + Marital.Status + Major + Next.Degree + AttendenceEvent + Years.Since.Graduation + FY12Giving + FY13Giving + FY14Giving + FY15Giving)
+mod.multinomial <- multinom(data = df, formula = FY16GivingCat ~ Marital.Status + Major + Next.Degree + AttendenceEvent + Years.Since.Graduation + FY12Giving + FY13Giving + FY14Giving + FY15Giving)
 
 summary(mod.multinomial)
 
@@ -334,7 +323,7 @@ Anova(mod.multinomial)
 ```{r}
 library(package = nnet)
 
-mod.multinomial.simple <- multinom(data = df, formula = FY16GivingCat ~ X + Marital.Status + AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
+mod.multinomial.simple <- multinom(data = df, formula = FY16GivingCat ~ Marital.Status + AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
 
 summary(mod.multinomial.simple)
 
@@ -350,15 +339,15 @@ HERE plot CUmulativeLogitModelPlot from book page 171
 
 ```{r}
 library(package = ordinal)
-mod.ordinal = clm(data = df, formula = FY16GivingCat ~ X + Marital.Status + AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
+mod.ordinal = clm(data = df, formula = FY16GivingCat ~ Marital.Status + AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
 summary(mod.ordinal)
 ```
 
 
 ```{r}
 library(package = ordinal)
-mod.ordinal = clm(data = df, formula = FY16GivingCat ~ X + AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
-summary(mod.ordinal)
+mod.ordinal.simpler = clm(data = df, formula = FY16GivingCat ~ AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
+summary(mod.ordinal.simpler)
 ```
 
 ## Ordinal Non-Proportional
