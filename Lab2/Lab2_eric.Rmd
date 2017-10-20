@@ -1,0 +1,371 @@
+
+---
+title: "Statistical Methods for Discrete Response, Time Series, and Panel Data (W271): Lab 2"
+author: "W271 Instructional Team"
+date: "October 8, 2017"
+output: pdf_document
+---
+
+# Instructions:
+
+*  **Due Date: 10/23/2017**
+
+* Submission:
+
+    * Submit your own assignment via ISVC
+    
+    * Submit 2 files:
+        1. A pdf file including the summary, the details of your analysis, and all the R codes used to produce the analysis. Please do not suppress the codes in your pdf file.
+        
+        2. R markdown file used to produce the pdf file
+        
+    * Each group only needs to submit one set of files
+    
+    * Use the following file naming convensation
+    
+        * SectionNumber_hw01_FirstNameLastNameFirstInitial.fileExtension
+    
+        * For example, if you are in Section 1 and have two students named John Smith and Jane Doe, you should name your file the following
+            * Section1_hw01_JohnS_JaneD.Rmd
+            * Section1_hw01_JohnS_JaneD.pdf
+    
+    * Although it sounds obvious, please write the name of each members of your group on page 1 of your report.
+    
+    * This lab can be completed in a group of up to 3 people. Each group only needs to make one submission. Although you can work by yourself, we encourage you to work in a group.
+    
+    * When working in a group, we encourage student not to use the "division-of-labor" approach to complete the lab. That is, do not divide the lab by having Student 1 completed questions 1 - 3, Student 2 completed questions 4 - 6, etc. Asking your teammates to do the questions for you is asking them take away your own opportunity to learn.
+
+* Other general guidelines:
+    * If you use R libraries and/or functions to conduct hypothesis tests not covered in this course, you will have to explain why the functions you use are appropriate for the hypothesis you are asked to test. Lacking explanations will result in a score of zero for the corresponding question.
+  
+    * Thoroughly analyze the given dataset. Detect any anomalies, including missing values, potential of top and/or bottom code, etc, in each of the variables.
+    
+    * Your report needs to include a comprehensive Exploratory Data Analysis (EDA) analysis, which includes both graphical and tabular analysis, as taught in this course. Output-dump (that is, graphs and tables that don't come with explanations) will result in a very low, if not zero, score.
+    
+    * Your analysis needs to be accompanied by detailed narrative. Remember, make sure your that when your audience (in this case, the professors and your classmates) can easily understand your your main conclusion and follow your the logic of your analysis. Note that just printing a bunch of graphs and model results, which we call "output dump", will likely receive a very low score.
+    
+    * Your rationale of any (EDA and modeling) decisions made in your modeling needs to be explained and supported with empirical evidence. Remember to use the insights generated from your EDA step to guide your modeling step, as we discussed in live sessions.
+    
+    * All the steps to arrive at your final model need to be shown and explained very clearly.
+
+*  Students are expected to act with regards to UC Berkeley Academic Integrity.
+
+
+# Description of the Business Problem, the Data, and Your Tasks
+
+The file *lab2data.csv* summarizes a sample of the contributions received a private university. Information in each record in the sample includes graduating class (Class.Year), gender, marital status, major of studies when the alumnus attending the university (Major), whether or not the alumnus has attended any university events hosted by the Alumni organization between year 2012 and 2015 (AttendenceEvent), and the contribution in each of the years between 2012 and 2016 (FY12Giving, FY13Giving, etc). This is a carefully constructed sample, including only alumni who graduated from the institution and not the former students who spent time at the institution without graduating. Alumni not contributing have the entry $"0"$ in the related column.
+
+For a university foundation, it is very important to know who is contributing, because those information allows the foundation to target their fund-raising resources to those alumni who are likely to donate in the future.
+
+In this lab, your group, as a team of data scientists working for the university foundation, are tasked to utilize the given information to predict who are likely to donate in the future. The data, *lab2data,csv*, contains recent historical information.  You will need to build a model to predict the most recent (i.e. fiscal year 2016) contribution "category" using techniques covered in lecture 1 - 5.  
+
+The variable of interest is *FY16Giving*, which is a numeric variable.  However, I'd like you to create another variable, named *FY16GivingCat*, representing various categories of contribution in 2016.  The categories are $[0,1)$, $[1,100)$, $[100,250)$, $[250,500)$, $[500,200000)$. Note that we specifically want to separate out those who did not contribute and put them in the $[0,1)$ bin.
+
+Even though I said "build a model", you are more than likely to experiment various model specifications as well as techniques. Some may consider using multinomial logistic regression, even though the categories are clearly ordered.
+
+As in any data science project, start your project with examination of the data and then exploratory analysis. These analyses will help the administration of the university foundation to understand the sample (before you present any model results to them).  In fact, your report should consider the following sections:
+
+  - Section 1: An introduction to the project, which should include a concise summary of the key results as well as techniques you used in your final model. 
+  
+  - Section 2: Data examination and EDA. This section should statr with a summary of the key insights you learn from examining the data and conducting the EDA.  Since there will be a page limit (see below), select your graphical and tabular results carefully and accompany each one with narrative.  **DO NOT USE OUTPUT DUMP!**
+  
+  - Section 3: Statistical Modeling. Start the section summarizing the key results - what variables, if any, are the key predictors of the year 2016 contribution? What are the key techniques you have experimented?  What method did you use in your final model? How did you choose the final model? What model performance criteria did you use to choose the final model? What statistical infernece did you perform? Explain them. Comment on statistical significance vs. economic significance.
+
+  - Section 4: Final Remarks.  After examining the data and using the data to build a predictive model, what are your departing thoughts? What are the strengths and weaknesses in your analysis? Should the administration trust your result? Are there subsample in your sample that your model did a bad job in predicting their contribution behavior? If so, why? Are there other "things", a wish list, that you think can be used to improve your model?  If so, what are they? Perhaps you can make a suggestion to the administration to collect those information in the future.
+  
+```{r}
+#Load Data
+#
+#donations = read.csv("C:/Users/eyang/Desktop/lab2data.csv")
+donations = read.csv("lab2data.csv")
+
+donations$FY16GivingCat <- ifelse(donations$FY16Giving >= 500, '[500,200000)',
+                                  ifelse(donations$FY16Giving >= 250, '[250,500)',
+                                         ifelse(donations$FY16Giving >= 100, '[100,250)',
+                                                ifelse(donations$FY16Giving >= 1, '[1,100)','[0,1)'))))
+donations$AdvancedDegree <- ifelse(donations$Next.Degree == 'NONE', 'None','Advanced')
+donations$AdvancedDegree_2 <- ifelse(donations$Next.Degree == 'NONE', 0,1)
+donations$AllPrior  <- donations$FY12Giving + donations$FY13Giving + donations$FY14Giving + donations$FY15Giving
+
+donations$MajorType <- ifelse(donations$Major=='Speech (Drama, etc.)'|
+                              donations$Major=='Physics'|
+                              donations$Major=='History'|
+                              donations$Major=='Economics-Business'|
+                              donations$Major=='Classics'|
+                              donations$Major=='English-Journalism'|
+                              donations$Major=='Music'|
+                              donations$Major=='Political Science'|
+                              donations$Major=='Psychology'|
+                              donations$Major=='American Studies'|
+                              donations$Major=='General Science-Psycho',
+                            "Top10", "Bottom")
+
+donations$MajorThird <- ifelse(donations$Major=='Speech (Drama, etc.)'|
+                              donations$Major=='Physics'|
+                              donations$Major=='History'|
+                              donations$Major=='Economics-Business'|
+                              donations$Major=='Classics'|
+                              donations$Major=='English-Journalism'|
+                              donations$Major=='Music'|
+                              donations$Major=='Political Science'|
+                              donations$Major=='Psychology'|
+                              donations$Major=='American Studies'|
+                              donations$Major=='General Science-Psycho'|
+                              donations$Major=='Econmics'|
+                              donations$Major=='Chinese'|
+                              donations$Major=='Mathematics'|
+                              donations$Major=='Biology',"Top", 
+                              
+                              ifelse(donations$Major=='Education'|
+                              donations$Major=='Independent'|
+                              donations$Major=='English'|
+                              donations$Major=='Sociology'|
+                              donations$Major=='Russian'|
+                              donations$Major=='Sociology-Anthropology'|
+                              donations$Major=='Physical Education'|
+                              donations$Major=='German'|
+                              donations$Major=='Chemistry'|
+                              donations$Major=='General Science-Biology'|
+                              donations$Major=='Philosophy-Religion'|
+                              donations$Major=='Spanish'|
+                              donations$Major=='French'|
+                              donations$Major=='Computer Science'|
+                              donations$Major=='Anthropology',
+                              'Middle3rd', "Bottom"))
+
+donations$MajorQuint <- ifelse(donations$Major=='Speech (Drama, etc.)'|
+                              donations$Major=='Physics'|
+                              donations$Major=='History'|
+                              donations$Major=='Economics-Business'|
+                              donations$Major=='Classics'|
+                              donations$Major=='English-Journalism'|
+                              donations$Major=='Music'|
+                              donations$Major=='Political Science'|
+                              donations$Major=='Psychology', "5th",
+                                
+                              ifelse(donations$Major=='American Studies'|
+                              donations$Major=='General Science-Psycho'|
+                              donations$Major=='Econmics'|
+                              donations$Major=='Chinese'|
+                              donations$Major=='Mathematics'|
+                              donations$Major=='Biology'|
+                              donations$Major=='Education'|
+                              donations$Major=='Independent'|
+                              donations$Major=='English',"4th", 
+                              
+                              ifelse(
+                              donations$Major=='Sociology'|
+                              donations$Major=='Russian'|
+                              donations$Major=='Sociology-Anthropology'|
+                              donations$Major=='Physical Education'|
+                              donations$Major=='German'|
+                              donations$Major=='Chemistry'|
+                              donations$Major=='General Science-Biology'|
+                              donations$Major=='Philosophy-Religion'|
+                              donations$Major=='Spanish', "3rd",
+                              
+                                
+                                
+                              ifelse(  
+                              donations$Major=='French'|
+                              donations$Major=='Computer Science'|
+                              donations$Major=='Anthropology'|
+                              donations$Major=='Theatre'|
+                              donations$Major=='Philosophy'|
+                              donations$Major=='Religious Studies'|
+                              donations$Major=='Art'|
+                              donations$Major=='Speech Correction'|
+                              donations$Major=='Comparative Literature',
+                              '2nd', "1st"))))
+
+
+#Setup Train & Test
+set.seed(101) 
+sample <- sample.int(n = nrow(donations), size = floor(.80*nrow(donations)), replace = F)
+train <- donations[sample, ]
+test  <- donations[-sample, ]
+
+nrow(test)
+nrow(train)
+```
+
+
+```{r}
+#EDA
+#Load Libraries
+library(car)
+require(dplyr)
+library(Hmisc)  
+library(ggpubr)
+library(plyr)
+require(data.table)
+
+
+head(donations)
+summary(donations)
+#Split Male/Female
+#1972 to 2012
+describe(donations)
+donations_DT<-setDT(donations)
+
+# Distribution by class
+ggplot(donations, aes(x = FY16Giving)) +
+  geom_histogram(aes(y = ..density..), fill="#0072B2", colour="black") +
+  ggtitle("Donation Distribution") + 
+  theme(plot.title = element_text(lineheight=1, face="bold"))
+#Heavily left skew distribution for donations in general
+#table(donations$Class.Year)
+#Much more recent grads from 2012 than the oldest cohort of 1972
+
+ggplot(donations, aes(AdvancedDegree, FY16Giving)) +
+  geom_boxplot(aes(fill = AdvancedDegree)) + 
+  #geom_jitter() +
+  ggtitle("Age vs party segregated on sanders preference") + 
+  theme(plot.title = element_text(lineheight=1, face="bold")) 
+
+ddply(donations,~AdvancedDegree,summarise,median = median(FY16Giving),mean=mean(FY16Giving),sd=sd(FY16Giving))
+#higher average donartion for advanced degrees
+
+fy12<-ggplot(donations, aes(log(FY12Giving+1), log(FY16Giving+1))) +
+         geom_jitter() +
+         ggtitle("FY12 vs FY16 Donations") + 
+         theme(plot.title = element_text(lineheight=1, face="bold"))
+
+fy13<-ggplot(donations, aes(log(FY13Giving+1), log(FY16Giving+1))) +
+         geom_jitter() +
+         ggtitle("FY13 vs FY16 Donations") + 
+         theme(plot.title = element_text(lineheight=1, face="bold"))
+
+fy14<-ggplot(donations, aes(log(FY14Giving+1), log(FY16Giving+1))) +
+         geom_jitter() +
+         ggtitle("FY14 vs FY16 Donations") + 
+         theme(plot.title = element_text(lineheight=1, face="bold"))
+
+fy15<-ggplot(donations, aes(log(FY15Giving+1), log(FY16Giving+1))) +
+         geom_jitter() +
+         ggtitle("FY15 vs FY16 Donations") + 
+         theme(plot.title = element_text(lineheight=1, face="bold"))
+
+allprior<-ggplot(donations, aes(AllPrior, FY16Giving)) +
+         geom_jitter() +
+         ggtitle("All Prior vs FY16 Donations") + 
+         theme(plot.title = element_text(lineheight=1, face="bold"))
+
+ggarrange(fy12,fy13,fy14,fy15)
+#Even year positive correlation for donations.  Every other year donation schedule?
+
+ddply(donations,~Class.Year,summarise,median = median(FY16Giving),mean=mean(FY16Giving),sd=sd(FY16Giving))
+#Older classes have a higher mean donation
+
+ddply(donations,~AttendenceEvent,summarise,median = median(FY16Giving),mean=mean(FY16Giving),sd=sd(FY16Giving))
+#Event Attendence is a strong indicator for donation
+
+ddply(donations,~Gender,summarise,median = median(FY16Giving),mean=mean(FY16Giving),sd=sd(FY16Giving))
+#Males have higher average
+
+ddply(donations,~Marital.Status,summarise,median = median(FY16Giving),mean=mean(FY16Giving),sd=sd(FY16Giving))
+#Widowers highest average, then Married
+
+major_agg <- donations_DT[,.(average_donation=mean(FY16Giving), n_donations=length(FY16Giving), mean_advanced=mean(AdvancedDegree_2)), by = Major]
+
+ggplot(major_agg, aes(x = average_donation, y = Major, size = n_donations)) +
+         geom_point() +
+         #geom_point(aes(color = Major)) +
+         ggtitle("Average Donation by Major") + 
+         theme(plot.title = element_text(lineheight=1, face="bold")) +
+         theme(text = element_text(size=8))
+#Speech has high average but looks like very small sample size
+
+major_attendance <- tapply(donations_DT$FY16Giving, list(donations_DT$Major, donations_DT$AttendenceEvent), FUN =mean) 
+major_attendance
+#Average attendance donations are higher forn all majors.
+
+advanced_agg <- donations_DT[,.(average_donation=mean(FY16Giving), n_donations=length(FY16Giving)), by = Next.Degree]
+
+ggplot(advanced_agg, aes(x = average_donation, y = Next.Degree, size = n_donations)) +
+         geom_point() +
+         #geom_point(aes(color = Major)) +
+         ggtitle("Average Donation by Next.Degree") + 
+         theme(plot.title = element_text(lineheight=1, face="bold")) +
+         theme(text = element_text(size=8))
+#Analysis TBD
+
+ggplot(major_agg, aes(x = mean_advanced, y = Major)) +
+         geom_point() +
+         #geom_point(aes(color = Major)) +
+         ggtitle("Percent of Advanced Degree by Major") + 
+         theme(plot.title = element_text(lineheight=1, face="bold")) +
+         theme(text = element_text(size=8))
+#Analysis TBD
+```  
+```{r}
+tapply(donations_DT$FY16Giving, list(donations_DT$Major, donations_DT$AttendenceEvent), FUN =mean) 
+#tapply(DT$v,list(DT$x, DT$y), FUN=sum)
+
+```
+
+#Model Exploration Multinominal
+```{r}
+library(nnet)
+library(car)
+library(MASS)
+library(Hmisc)
+
+#First Model
+mod.nominal1 <- multinom(factor(FY16GivingCat) ~ Gender + Marital.Status + AttendenceEvent + AdvancedDegree, data = train)
+summary(mod.nominal1)
+
+Anova(mod.nominal1)
+test.stats <- 
+  summary(mod.nominal1)$coefficients/summary(mod.nominal1)$standard.errors
+test.stats
+
+#Fully Saturated Model
+mod.nominal2 <- multinom(factor(FY16GivingCat) ~ Gender + Marital.Status + AttendenceEvent + AdvancedDegree + FY12Giving + FY13Giving + FY14Giving + FY15Giving + MajorQuint, data = train)
+summary(mod.nominal2)
+
+Anova(mod.nominal2)
+test.stats <- 
+  summary(mod.nominal2)$coefficients/summary(mod.nominal2)$standard.errors
+test.stats
+
+#Fully Saturated Model
+mod.nominal3 <- multinom(factor(FY16GivingCat) ~ Gender + Marital.Status + AttendenceEvent + AdvancedDegree + FY12Giving + FY13Giving + FY14Giving + FY15Giving + MajorThird, data = train)
+summary(mod.nominal3)
+
+Anova(mod.nominal3)
+test.stats <- 
+  summary(mod.nominal3)$coefficients/summary(mod.nominal3)$standard.errors
+test.stats
+
+```
+
+
+#Multinomial Model Prediction
+```{r}
+library(caret)
+preds <- predict(object=mod.nominal2, type = "class", newdata = test)
+
+require(reshape2)
+pred_results<-melt(data.frame(preds, test$FY16GivingCat))
+pred_results$Correct <- ifelse(pred_results$preds == pred_results$test.FY16GivingCat,1,0)
+pred_results$Baseline <- ifelse(pred_results$test.FY16GivingCat == '[0,1)',1,0)
+#head(pred_results)
+mean(pred_results$Correct)
+mean(pred_results$Baseline)
+
+confusionMatrix(data = preds, test$FY16GivingCat)
+```
+
+
+#Model Exploration Ordinal
+```{r}
+library(ordinal)
+#levels(factor(donations$FY16GivingCat))
+mod.ord1 <- clm(formula =factor(donations$FY16GivingCat) ~ Gender + Marital.Status + AttendenceEvent + AdvancedDegree + FY14Giving, data = donations, link = "logit")
+summary(mod.ord1)
+
+predict(object=mod.ord1, type = "prob")
+
+
+```
