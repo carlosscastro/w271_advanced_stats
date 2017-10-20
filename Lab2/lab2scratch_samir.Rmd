@@ -1,0 +1,172 @@
+---
+title: "lab 2 samir"
+author: "Samir Datta"
+date: "October 20, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(ordinal)
+library(nnet)
+library(caret)
+labdata <- read.csv('C:/Users/Samir/Documents/MIDS/StatsF17/lab 2/lab2data.csv')
+```
+
+#Feature enginerring
+
+```{r}
+#split major into STEM and non-STEM
+labdata$MajorType <- ifelse(labdata$Major=='Biology'|
+                              labdata$Major=='Economics'|
+                              labdata$Major=='Psychology'|
+                              labdata$Major=='Physics'|
+                              labdata$Major=='Chemistry'|
+                              labdata$Major=='Mathematics'|
+                              labdata$Major=='General Science-Chemistry'|
+                              labdata$Major=='Economics-Business'|
+                              labdata$Major=='General Science-Chemistry'|
+                              labdata$Major=='Sociology-Anthropology'|
+                              labdata$Major=='General Science-Psycho'|
+                              labdata$Major=='General Science-Math'|
+                              labdata$Major=='General Science-Biology'|
+                              labdata$Major=='Computer Science'|
+                              labdata$Major=='General Science'|
+                              labdata$Major=='Mathematics-Physics'|
+                              labdata$Major=='Economics-Regional Stds.'|
+                              labdata$Major=='Zoology'|
+                              labdata$Major=='Engineering'|
+                              labdata$Major=='Sociology'|
+                              labdata$Major=='Anthropology'|
+                              labdata$Major=='General Science-Physics',
+                            "STEM", "Non-STEM")
+
+#create variable nextDegreeType to categorize the most common next degrees
+labdata$NextDegreeType <- ifelse(labdata$Next.Degree=='JD', 'JD',
+                         ifelse(labdata$Next.Degree=='MA', 'MA', 
+                         ifelse(labdata$Next.Degree=='PHD', 'PHD',
+                        ifelse(labdata$Next.Degree=='NDA', 'NDA',
+                               ifelse(labdata$Next.Degree=='MS', 'MS',
+                                      ifelse(labdata$Next.Degree=='MD', 'MD',
+                                             ifelse(labdata$Next.Degree=='MBA', 'MBA', 
+         ifelse(labdata$Next.Degree=='NONE', 'NONE', 'Other'))))))))
+
+#create simpler variable to represent if someone has an advanced degree or not
+labdata$NextDegreeBinary <- ifelse(labdata$Next.Degree=='NONE', 0, 1)
+
+
+#create buckets for all years
+labdata$FY16cat <- cut(labdata$FY16Giving, c(0,1,100,250,500,200000), right=F)
+labdata$FY15cat <- cut(labdata$FY15Giving, c(0,1,100,250,500,200000), right=F)
+labdata$FY14cat <- cut(labdata$FY14Giving, c(0,1,100,250,500,200000), right=F)
+labdata$FY13cat <- cut(labdata$FY13Giving, c(0,1,100,250,500,200000), right=F)
+labdata$FY12cat <- cut(labdata$FY12Giving, c(0,1,100,250,500,200000), right=F)
+
+#turn class year into years since grad to make interpretaion easier
+labdata$YearsSinceGrad <- 2017 - labdata$Class.Year
+
+
+#loop through data to get each person's mean donation over the past 4 years
+#and how many of the past years they've donated
+labdata$meandonation <- NA
+labdata$nPastYears <- NA
+for (i in c(1:1000)){
+  labdata[i,]$meandonation<-mean(c(labdata[i,]$FY12Giving, 
+                                    labdata[i,]$FY13Giving, 
+                                    labdata[i,]$FY14Giving,
+                                    labdata[i,]$FY15Giving))
+  
+  labdata[i,]$nPastYears <- sum(c(labdata[i,]$FY12Giving>0, 
+                                  labdata[i,]$FY13Giving>0,
+                                  labdata[i,]$FY14Giving>0,
+                                  labdata[i,]$FY15Giving>0))
+}
+
+#binary variable - have they donated before or not?
+labdata$past_binary <- ifelse(labdata$meandonation == 0,0,1)
+
+#did they donate last year?
+labdata$donatedLastYear <- ifelse(labdata$FY15Giving==0, 0, 1)
+
+#how many of the past 4 years, consecutively, did they donate?
+#note that this will give a 0 for those that donated 2012-2014 but NOT 2015
+#since we're asking for consecutive years
+labdata$nPastConsecutiveYears <- ifelse(labdata$FY15Giving==0, 0,
+                                        ifelse(labdata$FY14Giving==0,1,
+                                               ifelse(labdata$FY13Giving==0,2,
+                                                      ifelse(labdata$FY12Giving==0,3,4))))
+
+#did they give in 2015 or not?
+labdata$gaveLastYear <- ifelse(labdata$FY15Giving==0,0,1)
+
+
+```
+
+
+
+```{r}
+labdata$donatedLastYear <- ifelse(labdata$FY15Giving==0, 0, 1)
+
+labdata$nPastConsecutiveYears <- ifelse(labdata$FY15Giving==0, 0,
+                                        ifelse(labdata$FY14Giving==0,1,
+                                               ifelse(labdata$FY13Giving==0,2,
+                                                      ifelse(labdata$FY12Giving==0,3,4))))
+labdata$gaveLastYear <- ifelse(labdata$FY15Giving==0,0,1)
+```
+
+
+
+
+#Model
+
+So far my favorite model has been: FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+                 Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear
+                 
+Ordinal:
+```{r}
+clm.out <- clm(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+                 Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear,
+               data=labdata)
+summary(clm.out)
+```
+
+Multinomial:
+```{r}
+mn.out <- multinom(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+                 Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear,
+               data=labdata)
+summary(mn.out)
+```
+
+
+Predictions
+
+Multinomial:
+
+```{r}
+randomRows <- sample(1000, 750, replace=FALSE)
+train <- labdata[randomRows,]
+test <- labdata[-randomRows,] 
+
+mn.out <- multinom(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+                     Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear, 
+                   data=train)
+
+preds <- predict(mn.out, test, type="class")
+confusionMatrix(preds, test$FY16cat)
+```
+
+
+Ordinal:
+```{r}
+clm.out <- clm(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+                 Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear,
+                   data=train)
+
+preds <- predict(clm.out, test, type="class")
+confusionMatrix(preds$fit, test$FY16cat)
+```
