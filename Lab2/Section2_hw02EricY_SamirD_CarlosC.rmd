@@ -1,0 +1,11 @@
+---
+title: "Statistical Methods for Discrete Response, Time Series, and Panel Data (W271): Lab 2"
+author: "Eric Yang, Samir Datta, Carlos Castro"
+date: "oCTOBER 22, 2017"
+output: pdf_document
+---
+
+## Section 1
+## Section 2
+## Section 3
+## Section 4
