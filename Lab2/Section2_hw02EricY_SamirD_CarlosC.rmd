@@ -376,21 +376,26 @@ Above is a scatterplot with the mean donation from 2012-2015 on the x-axis and t
 The purpose of the different colors/trend lines is to examine an interaction effect we found interesting and potentially useful for our model. The lines seem to generally be parallel except for the one representing the [0,1) category. The implication of this is that for alumni who donated in 2015, it is easier to predict their 2016 donations from their previous years, but for alumni who did not donate in 2015 the relationship is less clear. Rather than modeling an interaction term for each category for 2015, which could get too complex, it seems the interaction comes from whether they donated at all last year or not, which is why we will model their 2015 donations as a binary variable.
 
 
-## Section 3
-Key Predictors of 2016 Contribution
-The NextDegreeBinary -  This variable indicates whether an individual obtained an advanced degree.  We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Having an advanced degree increases the prob of contribution by x....
+# Statistical Modelling
 
-Attendence event  - We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Attending the event in our data increases the prob of contribution by x....
+## Key Predictors of 2016 Contribution Category
 
-log(meandonation + 1) - The vairable is a log transformed average of an individual's contribution over the past four year.  Having a higher average donation increases the prob of contribution by...
+Below we outline the predictors that we found to be key for the prediction of the 2016 contribution:
 
-gaveLastYear - A binary variable indicating whether an individual donated in 2015.  Donating in the prior year decreases 2016 prob of contribution by x...
+* NextDegreeBinary -  This variable indicates whether an individual obtained an advanced degree.  We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Having an advanced degree increases the prob of contribution by x....
 
-log(meandonation + 1):gaveLastYear- interaction between average donation in prior years and donation indicator in 2015.  Higher historical average donations will have a higher contribution even if they donated in the prior year.
+* Attendence event  - We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Attending the event in our data increases the prob of contribution by x....
 
-highvalLastYear - Binary variable indicating whether an individual donated more than 500 last year.  Individuals who were flagged as higher value doners in the prior years showed an increase of x....
+* log(meandonation + 1) - The vairable is a log transformed average of an individual's contribution over the past four year.  Having a higher average donation increases the prob of contribution by...
 
-#Modeling
+* gaveLastYear - A binary variable indicating whether an individual donated in 2015.  Donating in the prior year decreases 2016 prob of contribution by x...
+
+* log(meandonation + 1):gaveLastYear- interaction between average donation in prior years and donation indicator in 2015.  Higher historical average donations will have a higher contribution even if they donated in the prior year.
+
+* highvalLastYear - Binary variable indicating whether an individual donated more than 500 last year.  Individuals who were flagged as higher value doners in the prior years showed an increase of x....
+
+## Modeling
+
 We examined both multinomial and ordinal regression models.  The multinominal model was utilized since our dependent variable are categorical groups.  Initially we started with a model with most of the original variable not excluded from our EDA.  Using an Anova test we see that all variables are statisitically significant in the model.  The model's overall AIC is 1951.  We split the data into a test and training set allowing us to predict the accuracy of the model.  Using a confusion matrix we see that overall accuracy is 70% versus a No information Baseline of 58%.  The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
 
 ```{r}
@@ -412,4 +417,5 @@ mn.out1 <- multinom(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
   mn.preds <- predict(mn.out, test, type="class")
 confusionMatrix(mn.preds, test$FY16cat)
 ```
+
 ## Section 4
