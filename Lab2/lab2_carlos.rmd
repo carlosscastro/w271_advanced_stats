@@ -89,120 +89,58 @@ df$Major = factor(df$Major)
 # Categorize FY16Giving
 df$FY16GivingCat = cut(x = df$FY16Giving, c(0, 1, 100, 250, 500, 200000), right = FALSE)
 
+### Samir idea: 
+#loop through data to get each person's mean donation over the past 4 years
+#and how many of the past years they've donated
+df$meandonation <- NA
+df$nPastYears <- NA
+for (i in c(1:1000)){
+  df[i,]$meandonation<-mean(c(df[i,]$FY12Giving, 
+                                    df[i,]$FY13Giving, 
+                                    df[i,]$FY14Giving,
+                                    df[i,]$FY15Giving))
+  
+  df[i,]$nPastYears <- sum(c(df[i,]$FY12Giving>0, 
+                                  df[i,]$FY13Giving>0,
+                                  df[i,]$FY14Giving>0,
+                                  df[i,]$FY15Giving>0))
+}
+
+#binary variable - have they donated before or not?
+df$past_binary <- ifelse(df$meandonation == 0,0,1)
+
+#did they donate last year?
+df$donatedLastYear <- ifelse(df$FY15Giving==0, 0, 1)
+
+df$gaveLastYear <- ifelse(df$FY15Giving==0,0,1)
+
+df$donatedLastYear <- ifelse(df$FY15Giving==0, 0, 1)
+
+df$nPastConsecutiveYears <- ifelse(df$FY15Giving==0, 0,
+                                        ifelse(df$FY14Giving==0,1,
+                                               ifelse(df$FY13Giving==0,2,
+                                                      ifelse(df$FY12Giving==0,3,4))))
+df$gaveLastYear <- ifelse(df$FY15Giving==0,0,1)
+
+df$FY15HighVal <- ifelse(df$FY15Giving >= 500, 1,0)
+
 str(df)
 
 head(df)
 
 ```
 
-## Limits, outliers and missing values:
-
-We'll use Hmisc package throughout this section.
 ```{r}
 library(Hmisc)
 ```
 
-
-### Gender Variable
-
-```{r}
-describe(df$Gender)
-```
-
-### Class.Year Variable
-
-```{r}
-describe(df$Class.Year)
-```
-
-```{r}
-describe(df$Years.Since.Graduation)
-```
-
-### Marital.Status Variable
-
-```{r}
-describe(df$Marital.Status)
-```
-
-### Major Variable
-
-```{r}
-describe(df$Major)
-```
-
-### Next.Degree  Variable
-
-```{r}
-describe(df$Next.Degree)
-```
-
-### AttendenceEvent Variable
-
-```{r}
-describe(df$AttendenceEvent)
-```
-
-### FY12Giving Variable
-
-```{r}
-describe(df$FY12Giving)
-```
-
-```{r}
-hist(df$FY12Giving)
-```
-
-### FY13Giving Variable
-
-```{r}
-describe(df$FY13Giving)
-```
-
-```{r}
-hist(df$FY13Giving)
-```
-### FY14Giving Variable
-
-```{r}
-describe(df$FY14Giving)
-```
-
-```{r}
-hist(df$FY14Giving)
-```
-### FY15Giving Variable
-
-```{r}
-describe(df$FY15Giving)
-```
-
-```{r}
-hist(df$FY15Giving)
-```
-
-### FY16Giving Variable
-
-```{r}
-describe(df$FY16Giving)
-```
-
-```{r}
-hist(df$FY16Giving)
-```
-
-### FY16Givingcategory Variable
-
-```{r}
-describe(df$FY16GivingCat)
-```
 
 # EDA
 
 ```{r}
 describe(df)
 ```
-## Parallel Coordinate
+## Parallel Coordinates Plot
 
 ```{r}
 
@@ -301,36 +239,35 @@ ggplot(df, aes(FY16GivingCat, FY12Giving)) +
 ```{r}
 summary(df)
 ```
-## Multinomial Full Model
+## Model
+
+
+## Multinomial Simple
 
 ```{r}
+
+#80/20 split
+rnd <- sample(1000, 800, replace=FALSE)
+train <- df[rnd,]
+test <- df[-rnd,] 
+
 library(package = nnet)
 
-mod.multinomial <- multinom(data = df, formula = FY16GivingCat ~ Marital.Status + Major + Next.Degree + AttendenceEvent + Years.Since.Graduation + FY12Giving + FY13Giving + FY14Giving + FY15Giving)
+mod.multinomial <- multinom(data = train, formula = FY16GivingCat ~ Marital.Status + AttendenceEvent + as.ordered(Years.Since.Graduation) +log(meandonation+1)*gaveLastYear + FY15HighVal)
 
 summary(mod.multinomial)
 
 ```
 
 ```{r}
-library(package = car)
-
 Anova(mod.multinomial)
 ```
 
-## Multinomial Simple
-
 ```{r}
-library(package = nnet)
+library(caret)
+preds.multinomial <- predict(mod.multinomial, test, type="class")
+confusionMatrix(preds.multinomial, test$FY16cat)
 
-mod.multinomial.simple <- multinom(data = df, formula = FY16GivingCat ~ Marital.Status + AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
-
-summary(mod.multinomial.simple)
-
-```
-
-```{r}
-Anova(mod.multinomial.simple)
 ```
 
 ## Ordinal Proportional
@@ -339,18 +276,18 @@ HERE plot CUmulativeLogitModelPlot from book page 171
 
 ```{r}
 library(package = ordinal)
-mod.ordinal = clm(data = df, formula = FY16GivingCat ~ Marital.Status + AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
+mod.ordinal = clm(data = df, formula = FY16GivingCat ~ Marital.Status + AttendenceEvent + as.ordered(Years.Since.Graduation) +log(meandonation+1)*gaveLastYear + FY15HighVal)
 summary(mod.ordinal)
 ```
 
-
 ```{r}
-library(package = ordinal)
-mod.ordinal.simpler = clm(data = df, formula = FY16GivingCat ~ AttendenceEvent + Years.Since.Graduation + FY14Giving + FY15Giving)
-summary(mod.ordinal.simpler)
+Anova(mod.ordinal)
 ```
 
-## Ordinal Non-Proportional
+```{r}
+preds.ordinal <- predict(mod.ordinal, test, type="class")
+confusionMatrix(preds.ordinal$fit, test$FY16cat)
+```
 
 \newpage
 
