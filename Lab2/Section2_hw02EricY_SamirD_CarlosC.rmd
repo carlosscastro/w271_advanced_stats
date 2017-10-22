@@ -32,7 +32,7 @@ library(ggplot2)
 library(ordinal)
 library(nnet)
 library(caret)
-library(GGally)
+#library(GGally)
 labdata <- read.csv('lab2data.csv')
 ```
 
@@ -396,7 +396,7 @@ Below we outline the predictors that we found to be key for the prediction of th
 
 ## Modeling
 
-We examined both multinomial and ordinal regression models.  The multinominal model was utilized since our dependent variable are categorical groups.  Initially we started with a model with most of the original variable not excluded from our EDA.  Using an Anova test we see that all variables are statisitically significant in the model.  The model's overall AIC is 1951.  We split the data into a test and training set allowing us to predict the accuracy of the model.  Using a confusion matrix we see that overall accuracy is 70% versus a No information Baseline of 58%.  The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
+We examined both multinomial and ordinal regression models.  The multinominal model was utilized since our dependent variable are categorical groups.  Initially we started with a model with most of the original variable not excluded from our EDA.  Using an Anova test we see that all variables are statisitically significant in the model.  The model's overall AIC is 1471.  We split the data into a test and training set allowing us to predict the accuracy of the model.  Using a confusion matrix we see that overall accuracy is 59% versus a No information Baseline of 58%.  The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
 
 
 ```{r}
@@ -406,6 +406,18 @@ sample <- sample.int(n = nrow(labdata), size = floor(.75*nrow(labdata)), replace
 train <- labdata[sample, ]
 test  <- labdata[-sample, ]
 ```
+
+###Initial Multinomial Model
+```{r}
+mn.model <- multinom(FY16cat ~ AttendenceEvent + Gender + Class.Year  + Marital.Status + NextDegreeBinary + FY12Giving + FY13Giving + FY14Giving + FY15Giving, data=train)
+
+summary(mn.model)
+Anova(mn.model)
+
+mn.preds <- predict(mn.model, test, type="class")
+confusionMatrix(mn.preds, test$FY16cat)
+```
+
 
 ### Multinomial Model
 
