@@ -7,6 +7,8 @@ output: pdf_document
 
 ## Introduction
 
+Here we present the results of our analysis on contributions data for the university foundation, where our goal is to utilize the data available to predict who are likely to donate in the future and an idea of the magnitude of such donation.
+
 The dataset includes, for each record, information such as:
 
 * Donation amounts for the last 4 years
@@ -17,6 +19,8 @@ The dataset includes, for each record, information such as:
 * Year of graduation
 
 Given that the goal of this study is to be able to predict who are likely to donate and the magnitude of that donation, we build a model focusing on its predictive power rather than its explanatory power. To build our model, in the following sections we thoroughly analyze the data, afterwards consider both multinomial and ordinal models and conduct statistical analysis on them to choose the one most fit for the required predictions.
+
+<TODO: Concise summary of results here!>
 
 ## Section 2
 ## Section 3
