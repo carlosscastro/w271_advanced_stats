@@ -377,4 +377,39 @@ The purpose of the different colors/trend lines is to examine an interaction eff
 
 
 ## Section 3
+Key Predictors of 2016 Contribution
+The NextDegreeBinary -  This variable indicates whether an individual obtained an advanced degree.  We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Having an advanced degree increases the prob of contribution by x....
+
+Attendence event  - We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Attending the event in our data increases the prob of contribution by x....
+
+log(meandonation + 1) - The vairable is a log transformed average of an individual's contribution over the past four year.  Having a higher average donation increases the prob of contribution by...
+
+gaveLastYear - A binary variable indicating whether an individual donated in 2015.  Donating in the prior year decreases 2016 prob of contribution by x...
+
+log(meandonation + 1):gaveLastYear- interaction between average donation in prior years and donation indicator in 2015.  Higher historical average donations will have a higher contribution even if they donated in the prior year.
+
+highvalLastYear - Binary variable indicating whether an individual donated more than 500 last year.  Individuals who were flagged as higher value doners in the prior years showed an increase of x....
+
+#Modeling
+We examined both multinomial and ordinal regression models.  The multinominal model was utilized since our dependent variable are categorical groups.  Initially we started with a model with most of the original variable not excluded from our EDA.  Using an Anova test we see that all variables are statisitically significant in the model.  The model's overall AIC is 1951.  We split the data into a test and training set allowing us to predict the accuracy of the model.  Using a confusion matrix we see that overall accuracy is 70% versus a No information Baseline of 58%.  The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
+
+```{r}
+library(car)
+set.seed(107)
+sample <- sample.int(n = nrow(labdata), size = floor(.75*nrow(labdata)), replace = F)
+train <- labdata[sample, ]
+test  <- labdata[-sample, ]
+
+mn.out1 <- multinom(FY16cat ~ AttendenceEvent + Gender + Class.Year  + Marital.Status + NextDegreeBinary + FY12Giving + FY13Giving + FY14Giving + FY15Giving, data=labdata)
+summary(mn.out1)
+Anova(mn.out1)
+
+#Prediction
+mn.out1 <- multinom(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+                       Gender+NextDegreeBinary+log(meandonation+1)+gaveLastYear, 
+                     data=train)
+  
+  mn.preds <- predict(mn.out, test, type="class")
+confusionMatrix(mn.preds, test$FY16cat)
+```
 ## Section 4
