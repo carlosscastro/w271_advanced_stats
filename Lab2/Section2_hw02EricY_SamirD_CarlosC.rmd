@@ -396,7 +396,7 @@ Below we outline the predictors that we found to be key for the prediction of th
 
 ## Modeling
 
-We examined both multinomial and ordinal regression models.  The multinominal model was utilized since our dependent variable are categorical groups.  Initially we started with a model with most of the original variable not excluded from our EDA.  Using an Anova test we see that all variables are statisitically significant in the model.  The model's overall AIC is 1471.  We split the data into a test and training set allowing us to predict the accuracy of the model.  Using a confusion matrix we see that overall accuracy is 59% versus a No information Baseline of 58%.  The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
+We examined both multinomial and ordinal regression models.  The multinominal model was utilized since our dependent variable are categorical.  Initially we started with a model with most of the original variables not excluded from our EDA.  Using an Anova test we see that all variables are statisitically significant in the model.  The model's overall AIC is 1471.  We split the data into a test and training set allowing us to predict the accuracy of the model.  Using a confusion matrix we see that overall accuracy is 59% versus a No information Baseline of 54%.  The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
 
 
 ```{r}
@@ -433,6 +433,7 @@ confusionMatrix(mn.preds, test$FY16cat)
 ```
 
 ### Ordinal Model
+Our final model was an oridinal model.  The ordinal model improved slightly on overall accuracy with our test set scoring a 68.8%, however this was not significantly different from our prior multinomial model.  Where the ordinal did improve was the sensitivity/specificity scores for the highest doner groups and the non doner group.  Along with overall accuracy our final evaluation focused correctly identifying the top group because of the large portion of donations they accounted in additon to correctly identifying the zero dollar doners who account for a largest category of doners.  The ordinal model also maintain the parsimony of the previous model, which as noted previously should help against overfitting on a small training/test set.
 
 ```{r}
 ord.model <- clm(FY16cat ~ AttendenceEvent + Gender + NextDegreeBinary + as.ordered(YearsSinceGrad) + log(meandonation+1) * gaveLastYear, data=train)
