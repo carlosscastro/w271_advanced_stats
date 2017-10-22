@@ -1,9 +1,12 @@
 
 ---
-title: "Statistical Methods for Discrete Response, Time Series, and Panel Data (W271): Lab 2"
+title: 'Statistical Methods for Discrete Response, Time Series, and Panel Data (W271):
+  Lab 2'
 author: "W271 Instructional Team"
 date: "October 8, 2017"
-output: pdf_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 # Instructions:
@@ -86,6 +89,36 @@ donations$FY16GivingCat <- ifelse(donations$FY16Giving >= 500, '[500,200000)',
 donations$AdvancedDegree <- ifelse(donations$Next.Degree == 'NONE', 'None','Advanced')
 donations$AdvancedDegree_2 <- ifelse(donations$Next.Degree == 'NONE', 0,1)
 donations$AllPrior  <- donations$FY12Giving + donations$FY13Giving + donations$FY14Giving + donations$FY15Giving
+
+donations$FY16Giver <- ifelse(donations$FY16Giving != 0, 1,0)
+donations$FY15Giver <- ifelse(donations$FY15Giving != 0, 1,0)
+donations$FY14Giver <- ifelse(donations$FY14Giving != 0, 1,0)
+donations$FY13Giver <- ifelse(donations$FY13Giving != 0, 1,0)
+donations$FY12Giver <- ifelse(donations$FY12Giving != 0, 1,0)
+
+donations$FY16HighVal <- ifelse(donations$FY16Giving >= 500, 1,0)
+donations$FY15HighVal <- ifelse(donations$FY15Giving >= 500, 1,0)
+donations$FY14HighVal <- ifelse(donations$FY14Giving >= 500, 1,0)
+donations$FY13HighVal <- ifelse(donations$FY13Giving >= 500, 1,0)
+donations$FY12HighVal <- ifelse(donations$FY12Giving >= 500, 1,0)
+
+donations$RecentGrad <- ifelse(donations$Class.Year == 2012, 1, 0)
+
+donations$NeverMarried <- ifelse(donations$Marital.Status == 'S', 1, 0)
+
+donations$FY15GivingCat <- ifelse(donations$FY15Giving >= 500, '[500,200000)',
+                                  ifelse(donations$FY15Giving >= 250, '[250,500)',
+                                         ifelse(donations$FY15Giving >= 100, '[100,250)',
+                                                ifelse(donations$FY15Giving >= 1, '[1,100)','[0,1)'))))
+
+donations$TopAdvanced <- ifelse(donations$Next.Degree=='ML'|
+                              donations$Next.Degree=='LLB'|
+                              donations$Next.Degree=='JD'|
+                              donations$Next.Degree=='MSW'|
+                              donations$Next.Degree=='UMD', 1,0)
+
+
+
 
 donations$MajorType <- ifelse(donations$Major=='Speech (Drama, etc.)'|
                               donations$Major=='Physics'|
@@ -180,8 +213,8 @@ donations$MajorQuint <- ifelse(donations$Major=='Speech (Drama, etc.)'|
 
 
 #Setup Train & Test
-set.seed(101) 
-sample <- sample.int(n = nrow(donations), size = floor(.80*nrow(donations)), replace = F)
+set.seed(1010) 
+sample <- sample.int(n = nrow(donations), size = floor(.75*nrow(donations)), replace = F)
 train <- donations[sample, ]
 test  <- donations[-sample, ]
 
@@ -297,7 +330,22 @@ ggplot(major_agg, aes(x = mean_advanced, y = Major)) +
          theme(plot.title = element_text(lineheight=1, face="bold")) +
          theme(text = element_text(size=8))
 #Analysis TBD
+
 ```  
+```{r}
+#Co-occurence of Giver Variables
+prop.table(table(donations$FY16Giver, donations$FY15Giver, dnn = c('FY16', 'FY15')))
+prop.table(table(donations$FY16Giver, donations$FY14Giver, dnn = c('FY16', 'FY14')))
+prop.table(table(donations$FY16Giver, donations$FY13Giver, dnn = c('FY16', 'FY13')))
+prop.table(table(donations$FY16Giver, donations$FY12Giver, dnn = c('FY16', 'FY12')))
+
+#Co-occurence of High Val Variables
+prop.table(table(donations$FY16HighVal, donations$FY15HighVal, dnn = c('FY16', 'FY15')))
+prop.table(table(donations$FY16HighVal, donations$FY14HighVal, dnn = c('FY16', 'FY14')))
+prop.table(table(donations$FY16HighVal, donations$FY13HighVal, dnn = c('FY16', 'FY13')))
+prop.table(table(donations$FY16HighVal, donations$FY12HighVal, dnn = c('FY16', 'FY12')))
+```
+
 ```{r}
 tapply(donations_DT$FY16Giving, list(donations_DT$Major, donations_DT$AttendenceEvent), FUN =mean) 
 #tapply(DT$v,list(DT$x, DT$y), FUN=sum)
@@ -324,13 +372,15 @@ test.stats
 mod.nominal2 <- multinom(factor(FY16GivingCat) ~ Gender + Marital.Status + AttendenceEvent + AdvancedDegree + FY12Giving + FY13Giving + FY14Giving + FY15Giving + MajorQuint, data = train)
 summary(mod.nominal2)
 
-Anova(mod.nominal2)
+#Anova(mod.nominal2)
 test.stats <- 
   summary(mod.nominal2)$coefficients/summary(mod.nominal2)$standard.errors
 test.stats
+```
 
+```{r}
 #Fully Saturated Model
-mod.nominal3 <- multinom(factor(FY16GivingCat) ~ Gender + Marital.Status + AttendenceEvent + AdvancedDegree + FY12Giving + FY13Giving + FY14Giving + FY15Giving + MajorThird, data = train)
+mod.nominal3 <- multinom(factor(FY16GivingCat) ~ Class.Year + Gender + AttendenceEvent + AdvancedDegree + FY12Giving + FY13Giving + FY14Giving + FY15Giving + MajorThird + FY15Giver + FY13Giver + FY12Giver + FY15HighVal + FY14HighVal + FY12HighVal + RecentGrad:FY15Giving + Marital.Status, data = train)
 summary(mod.nominal3)
 
 Anova(mod.nominal3)
@@ -340,11 +390,10 @@ test.stats
 
 ```
 
-
 #Multinomial Model Prediction
 ```{r}
 library(caret)
-preds <- predict(object=mod.nominal2, type = "class", newdata = test)
+preds <- predict(object=mod.nominal3, type = "class", newdata = test)
 
 require(reshape2)
 pred_results<-melt(data.frame(preds, test$FY16GivingCat))
@@ -355,6 +404,10 @@ mean(pred_results$Correct)
 mean(pred_results$Baseline)
 
 confusionMatrix(data = preds, test$FY16GivingCat)
+
+#Sensitivity is True positive and specificity is true negative.  We should have a model that is highly accurate in identifying high value targets and identifying people who will not donate?
+
+#Most likely it is important to correctly identify the [500,20000) group since they account for 74% of the donations
 ```
 
 
@@ -362,10 +415,12 @@ confusionMatrix(data = preds, test$FY16GivingCat)
 ```{r}
 library(ordinal)
 #levels(factor(donations$FY16GivingCat))
-mod.ord1 <- clm(formula =factor(donations$FY16GivingCat) ~ Gender + Marital.Status + AttendenceEvent + AdvancedDegree + FY14Giving, data = donations, link = "logit")
+mod.ord1 <- clm(formula =factor(FY16GivingCat) ~ Class.Year + Gender + Marital.Status + AttendenceEvent + AdvancedDegree + FY12Giving + FY13Giving + FY14Giving + FY15Giving + MajorThird + FY15Giver + FY13Giver + FY12Giver + FY15HighVal + FY14HighVal + FY12HighVal, data = train)
 summary(mod.ord1)
 
-predict(object=mod.ord1, type = "prob")
+#ord.preds <- predict(object=mod.ord1, type = "class", data = test)
 
+#confusionMatrix(ord.preds$fit, factor(test$FY16GivingCat))
 
+#ord.preds$fit
 ```
