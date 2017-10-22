@@ -5,7 +5,7 @@ date: "oCTOBER 22, 2017"
 output: pdf_document
 ---
 
-## Introduction
+# Introduction
 
 Here we present the results of our analysis on contributions data for the university foundation, where our goal is to utilize the data available to predict who are likely to donate in the future and an idea of the magnitude of such donation.
 
@@ -22,7 +22,9 @@ Given that the goal of this study is to be able to predict who are likely to don
 
 <TODO: Concise summary of results here!>
 
-## Section 2
+# Data Analysis
+
+## Data Loading
 
 ```{r}
 #loading packages and data
@@ -31,10 +33,10 @@ library(ordinal)
 library(nnet)
 library(caret)
 library(GGally)
-labdata <- read.csv('C:/Users/Samir/Documents/MIDS/StatsF17/lab 2/lab2data.csv')
+labdata <- read.csv('lab2data.csv')
 ```
 
-#Feature enginerring
+## Feature engineering
 
 ```{r}
 #split major into STEM and non-STEM
@@ -136,9 +138,7 @@ labdata$gaveLastYear <- ifelse(labdata$FY15Giving==0,0,1)
 ```
 
 
-#EDA
-
-##Univariate analysis
+## EDA Univariate analysis
 
 ###Gender
 ```{r}
@@ -204,7 +204,7 @@ table(labdata$FY16cat)
 
 The numbers for 2016 also look very similar to the previous years. This suggests that a large number of alumni stay in the same donation category from year to year, and that implementing information about previous years' donations will be crucial for our model's predictive ability. As we noticed before, the [250,500) category is very sparsely represented, which may make it hard to predict accurately.
 
-###mean donation in the past
+### Mean donation in the past
 
 ```{r}
 par(mfrow=c(1,2))
@@ -214,12 +214,15 @@ hist(log(labdata$meandonation+1))
 
 The variable mean donation, which represents each alumnus' mean donation from 2012-2015, has a large positive skew. Applying a log transformation (after adding 1, since the value 0 can't be log transformed) solves this to some extent, although a slight positive skew is still evident. A disproportionate number of alumni have a mean donation value of 0.
 
-##Relationship between FY16cat and other variables
+## EDA Relationship between FY16cat and other variables
 
 ###Parallel coordinate plot
+
 ```{r}
-parallel.columns <- c("Gender", "Marital.Status", "AttendenceEvent","FY12Giving", "FY13Giving", "FY14Giving", "FY15Giving", "YearsSinceGrad", "meandonation", "NextDegreeBinary")
-ggparcoord(labdata, columns = parallel.columns, order = 1:length(parallel.columns), groupColumn = "FY16cat", scale = "uniminmax", scaleSummary = "center", title = "FY16GivingCat: Parallel Coordinate Plot") + theme(axis.text.x = element_text(angle = 90))
+describe(labdata)
+```
+```{r}
+ggparcoord(labdata, columns = c(2, 3, 4, 7, 9, 10, 11, 15, 17, 22, 23), groupColumn = "FY16cat", scale = "uniminmax", scaleSummary = "center", title = "FY16GivingCat: Parallel Coordinate Plot") + theme(axis.text.x = element_text(angle = 90))
 ```
 
 ###Major type - STEM vs. Non-STEM
@@ -356,7 +359,7 @@ This stacked bar graph shows what proportion of alumni that fit into donation ca
 A key takeaway from this visualization is the relative instability of the [1,100) class - compared to other classes, this group was the least likely to donate in the same category. Still, past donations seem to be important in predicting future donations.
 
 
-##Interaction between last year's donations and overall donations in predicting 2016 donations
+## EDA - Interaction between last year's donations and overall donations in predicting 2016 donations
 
 ```{r}
 ggp <- ggplot(labdata, aes(x=log(meandonation+1)/log(10), y=log(FY16Giving+1)/log(10), 
