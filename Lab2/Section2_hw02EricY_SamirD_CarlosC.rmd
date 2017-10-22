@@ -420,6 +420,7 @@ confusionMatrix(mn.preds, test$FY16cat)
 
 
 ### Multinomial Model
+After adding some engineered features we were able to reduce the model AIC to 1168 and reduce the features from 9 to 5.  Reducing the number of features should help with not overfitting the model on a relatively small sample set.  We removed marital status because of small sample sizes for the Widow and Divorced groups.  The addition of log(meandonation+1) and gaveLastYear provide prior donation history and are highly significant in the model based on the Anova test.  The confusion matrix shows a greatly improved overall acuracy with at 67.6% with a 95% confidence between 61.4% and 73.3%.  We also see an improvement in the sensitivity for the highest doner group.  It is important to be able to identify individuals in this group since they account for ~77% of donations in 2016. 
 
 ```{r}
 mn.model <- multinom(FY16cat ~ AttendenceEvent + Gender + NextDegreeBinary + as.ordered(YearsSinceGrad) + log(meandonation+1) * gaveLastYear, data=train)
