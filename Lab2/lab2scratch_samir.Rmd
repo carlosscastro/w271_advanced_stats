@@ -119,16 +119,146 @@ labdata$gaveLastYear <- ifelse(labdata$FY15Giving==0,0,1)
 ```
 
 
+#EDA
 
+##Major type - STEM vs. Non-STEM
+
+```{r}
+labdata_counts <- with(labdata,
+                       aggregate(MajorType,
+                                 list(MajorType=MajorType),
+                                 length))
+labdata_agg <- with(labdata,
+                    aggregate(MajorType, list(MajorType=MajorType,
+                                            FY16cat=FY16cat),
+                    length))
+labdata_agg <- merge(labdata_agg, labdata_counts, by="MajorType")
+labdata_agg <- setNames(labdata_agg, c("MajorType", "FY16cat", "Count", "TotalCount"))
+labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
+labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
+      levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
+
+ggp <- ggplot(labdata_agg, aes(x=MajorType,y=percent))
+
+ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+  ylab("% of alumni in each category")+xlab("Years since graduation")+
+  scale_fill_discrete(name="Donation Category for 2016")
+```
+
+Major type does not seem to have an effect on the donation amount of an alumnnus, as the distribution of donation categories appears virtually identical regardless of whether they graduated with a STEM or non-STEM degree.
+
+
+
+##Next Degree (binary)  
+```{r}
+labdata_counts <- with(labdata,
+                       aggregate(YearsSinceGrad,
+                                 list(YearsSinceGrad=YearsSinceGrad),
+                                 length))
+labdata_agg <- with(labdata,
+                    aggregate(YearsSinceGrad, list(YearsSinceGrad=YearsSinceGrad,
+                                            FY16cat=FY16cat),
+                    length))
+labdata_agg <- merge(labdata_agg, labdata_counts, by="YearsSinceGrad")
+labdata_agg <- setNames(labdata_agg, c("YearsSinceGrad", "FY16cat", "Count", "TotalCount"))
+labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
+labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
+      levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
+
+ggp <- ggplot(labdata_agg, aes(x=YearsSinceGrad,y=percent))
+
+ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+  ylab("% of alumni in each category")+xlab("Years since graduation")+
+  scale_fill_discrete(name="Donation Category for 2016")
+```
+A clear ordinal relationship between years since grad and the amount donated in 2016 is shown in the violin plot, where those that graduated longer ago are more likely to not be in the [0,1] category and more likely to be in higher donation categories as well.
+
+##Gender
+
+```{r}
+labdata_counts <- with(labdata,
+                       aggregate(Gender,
+                                 list(Gender=Gender),
+                                 length))
+labdata_agg <- with(labdata,
+                    aggregate(Gender, list(Gender=Gender,
+                                            FY16cat=FY16cat),
+                    length))
+labdata_agg <- merge(labdata_agg, labdata_counts, by="Gender")
+labdata_agg <- setNames(labdata_agg, c("Gender", "FY16cat", "Count", "TotalCount"))
+labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
+labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
+      levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
+
+ggp <- ggplot(labdata_agg, aes(x=Gender,y=percent))
+
+ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+  ylab("% of alumni in each category")+xlab("Gender")+
+  scale_fill_discrete(name="Donation Category for 2016")
+```
+
+Men appear to be more likely to donate in the top 3 categories, while women appear to be more likely to donate in the [1,100) category. Interestingly, both men and women appear to be just as likely to donate nothing. This may suggest that gender would be more useful for a multinomial model instead of an ordinal model.
+
+##Attendance event
+```{r}
+labdata_counts <- with(labdata,
+                       aggregate(AttendenceEvent,
+                                 list(AttendenceEvent=AttendenceEvent),
+                                 length))
+labdata_agg <- with(labdata,
+                    aggregate(AttendenceEvent, list(AttendenceEvent=AttendenceEvent,
+                                            FY16cat=FY16cat),
+                    length))
+labdata_agg <- merge(labdata_agg, labdata_counts, by="AttendenceEvent")
+labdata_agg <- setNames(labdata_agg, c("AttendenceEvent", "FY16cat", "Count", "TotalCount"))
+labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
+labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
+      levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
+
+ggp <- ggplot(labdata_agg, aes(x=as.factor(AttendenceEvent),y=percent))
+
+ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+  ylab("% of alumni in each category")+xlab("Donation category for 2015")+
+  scale_fill_discrete(name="Donation Category for 2016")+
+  xlab("Attendance Event")+scale_x_discrete(labels=c("Didn't Attend", "Attended"))
+```
+
+Those who went to the attendance event were much more likely to donate and especially more likely to donate in the higher categories.
+
+
+
+##Donation category for the previous year (2015)
+```{r}
+labdata_counts <- with(labdata,
+                       aggregate(FY15cat,
+                                 list(FY15cat=FY15cat),
+                                 length))
+labdata_agg <- with(labdata,
+                    aggregate(FY15cat, list(FY15cat=FY15cat,
+                                            FY16cat=FY16cat),
+                    length))
+labdata_agg <- merge(labdata_agg, labdata_counts, by="FY15cat")
+labdata_agg <- setNames(labdata_agg, c("FY15cat", "FY16cat", "Count", "TotalCount"))
+labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
+
+ggp <- ggplot(labdata_agg, aes(x=FY15cat,y=percent))
+
+ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+  ylab("% of alumni in each category")+xlab("Donation category for 2015")+
+  scale_fill_discrete(name="Donation Category for 2016")
+```
+
+This stacked bar graph shows what proportion of alumni that fit into donation category X went into the same - or different - category in 2016. As expected, the largest bar in each group represents the same category. That is, the majority of those who donated $0 in 2015 also donated $0 in 2016, the majority of those who donated between $1-$100 in 2015 stayed in that category the next year, etc.
+
+A key takeaway from this visualization is the relative instability of the [1,100) class - compared to other classes, this group was the least likely to donate in the same category. Still, past donations seem to be important in predicting future donations.
 
 #Model
 
-So far my favorite model has been: FY16cat ~ AttendenceEvent + YearsSinceGrad  +
-                 Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear
+
                  
 Ordinal:
 ```{r}
-clm.out <- clm(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+clm.out <- clm(FY16cat ~ AttendenceEvent + as.ordered(YearsSinceGrad)  +
                  Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear,
                data=labdata)
 summary(clm.out)
@@ -136,7 +266,7 @@ summary(clm.out)
 
 Multinomial:
 ```{r}
-mn.out <- multinom(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+mn.out <- multinom(FY16cat ~ AttendenceEvent + as.ordered(YearsSinceGrad)  +
                  Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear,
                data=labdata)
 summary(mn.out)
@@ -145,28 +275,31 @@ summary(mn.out)
 
 Predictions
 
+```{r}
+#define randomized train/test set with 80/20 split
+randomRows <- sample(1000, 800, replace=FALSE)
+  train <- labdata[randomRows,]
+  test <- labdata[-randomRows,] 
+  
+```
 Multinomial:
 
 ```{r}
-randomRows <- sample(1000, 750, replace=FALSE)
-train <- labdata[randomRows,]
-test <- labdata[-randomRows,] 
-
 mn.out <- multinom(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
-                     Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear, 
-                   data=train)
-
-preds <- predict(mn.out, test, type="class")
-confusionMatrix(preds, test$FY16cat)
+                       Gender+NextDegreeBinary+log(meandonation+1)+gaveLastYear, 
+                     data=train)
+  
+  mn.preds <- predict(mn.out, test, type="class")
+confusionMatrix(mn.preds, test$FY16cat)
 ```
 
 
 Ordinal:
 ```{r}
-clm.out <- clm(FY16cat ~ AttendenceEvent + YearsSinceGrad  +
+clm.out <- clm(FY16cat ~ AttendenceEvent + as.ordered(YearsSinceGrad)  +
                  Gender+NextDegreeBinary+log(meandonation+1)*gaveLastYear,
                    data=train)
 
-preds <- predict(clm.out, test, type="class")
-confusionMatrix(preds$fit, test$FY16cat)
+clm.preds <- predict(clm.out, test, type="class")
+confusionMatrix(clm.preds$fit, test$FY16cat)
 ```
