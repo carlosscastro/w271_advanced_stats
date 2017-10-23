@@ -341,9 +341,9 @@ We examined both multinomial and ordinal regression models. In the following sec
 
 ## Explanation vs Prediction
 
-As we mentioned before, the overall goal of the current work is prediction of future donations rather than explanation of the factors that drive donation. Given that, we choose to choose models based on their predictive power rather than their explanatory power. 
+As we mentioned before, the overall goal of the current work is prediction of future donations rather than explanation of the factors that drive donation. Given that, we choose models based on their predictive power rather than their explanatory power. 
 
-For the same reason, we take a machine learning approach to model welection, where We split the data into a test and training set allowing us to test the accuracy of the model. 
+For the same reason, we take a machine learning approach to model selection, where we split the data into a test and training set allowing us to test the accuracy of the model. 
 
 
 ```{r}
@@ -386,20 +386,19 @@ The confusion matrix shows that the model is better at predicting the [0,1) and 
 
 ## Multinomial Model
 
-We now aim to improve our model using engineers features from our EDA. Interestingly, features that we believed would increase our predictive power, actually had a very positive impact in the overall performance of our model.
+We now aim to improve our model using engineered features from our EDA. Interestingly, features that we believed would increase our predictive power, actually had a very positive impact in the overall performance of our model.
 
 ```{r}
 mn.model <- multinom(FY16cat ~ AttendenceEvent + Gender + NextDegreeBinary + as.ordered(YearsSinceGrad) + log(meandonation+1) * gaveLastYear, data=train)
 summary(mn.model)
 ```
-f
-We can see that were able to reduce the model AIC to 1168 and reduce the features. Reducing the number of features should help with not overfitting the model on a relatively small sample set. We removed marital status because of small sample sizes for the Widow and Divorced groups. The addition of $log(meandonation+1)$ and $gaveLastYear$ provide powerful and yet concise insights on the past donation history.
+We can see that we were able to reduce the model AIC to 1168 and reduce the features included in the model. Reducing the number of features should help with not overfitting the model on a relatively small sample set. We removed marital status because of small sample sizes for the Widow and Divorced groups. The addition of $log(meandonation+1)$ and $gaveLastYear$ provide powerful and yet concise insights on the past donation history.
 
 ```{r}
 Anova(mn.model)
 ```
 
-Analyzing the deviance table, we can observe that attendence to recruiting events and years since graduation do not pass the likelihood test, accepting the null hypothesis that the coefficient for those predictors is zero. However, from a domain knowledge perspective we feel that those variables are important, and that is confirmed by the improved prediction power of our model, which we can analyze by showing its confusion matrix.
+Analyzing the deviance table, we can observe that attendence to recruiting events and years since graduation do not pass the likelihood test, accepting the null hypothesis that the coefficient for those predictors is zero. However, from our domain knowledge and initial EDA we feel that those variables are important, and that is confirmed by the improved prediction power of our model, which we can analyze by showing its confusion matrix.
 
 ```{r}
 mn.preds <- predict(mn.model, test, type="class")
@@ -421,8 +420,7 @@ ord.model <- clm(FY16cat ~ AttendenceEvent + Gender + NextDegreeBinary + as.orde
 summary(ord.model)
 ```
 
-
-Note that the ordinal model also maintains the parsimony of the previous model, using the same predictors. We can observe that most variables are statistically significant, except for attendenceEven, Gender, and some levels of the years since graduation. However, these variables proved to be quite valuable in our EDA, and furthermore we did formal hypothesis testing of removing them, and the model with them proved to be better, and also had better predictive power which again is our focus in this study.
+Note that the ordinal model also maintains the parsimony of the previous model, using the same predictors. We can observe that most variables are statistically significant, except for attendenceEven, Gender, and some levels of the years since graduation. However, these variables proved to be quite valuable in our EDA, and furthermore we did formal hypothesis testing of removing them, and the model with them proved to be better, and also had better predictive power which again is our focus in this study.  The $log(meandonation+1)$, $gaveLastYear$ and the interaction between variables have the largest effect on prediciting donor groups.  Doners who gave in 2015 are less likely to donate in 2016 and higher average past donations lead to predicted higher donations in the current year.  This dynamic is also reflected in the interaction term for the variables.
 
 ```{r}
 Anova(ord.model)
