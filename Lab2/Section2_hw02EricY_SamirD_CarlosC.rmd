@@ -1,7 +1,7 @@
 ---
 title: "Statistical Methods for Discrete Response, Time Series, and Panel Data (W271): Lab 2"
 author: "Eric Yang, Samir Datta, Carlos Castro"
-date: "oCTOBER 22, 2017"
+date: "OCTOBER 22, 2017"
 output: pdf_document
 ---
 
@@ -20,7 +20,21 @@ The dataset includes, for each record, information such as:
 
 Given that the goal of this study is to be able to predict who are likely to donate and the magnitude of that donation, we build a model focusing on its predictive power rather than its explanatory power. To build our model, in the following sections we thoroughly analyze the data, afterwards consider both multinomial and ordinal models and conduct statistical analysis on them to choose the one most fit for the required predictions.
 
-<TODO: Concise summary of results here!>
+As part of priorizing prediction over explanation in our models, we used a machine learning approach to testing and selecting models. We split our data in train and test set, to validate the predictions. In addition, to select the most powerful yet parsimious model predictors, we used statistical analysis, a thorough exploratory data analysis and domain knowledge.
+
+We used confusion matrices on our models to understand exactly the strengths and weaknesses of our models' predictive power.
+
+Finally, we selected an ordinal model that is based off the following predictors:
+
+* AttendenceEvent: Whether they attended the donor events between 2012 and 2015
+* Gender
+* NextDegreeBinary: Binary variable of whether they would pursue another degree
+* as.ordered(YearsSinceGrad): ordinal variable based off years since graduation (it has only 4 levels)
+* log(meandonation+1) * gaveLastYear: Interaction between log of mean donation for the individual between 2012 and 2015 plus one, and whether it gave money last year or not
+
+
+The sections to follow will include a thorough data analysis, starting with univariate analysis and then observing interactions with our output variable. After that, we'll do a model selection section where we explain our process towards the final model, followed by final remarks on our investigation.
+
 
 # Data Analysis
 
@@ -378,25 +392,15 @@ The purpose of the different colors/trend lines is to examine an interaction eff
 
 # Statistical Modelling
 
-## Key Predictors of 2016 Contribution Category
-
-Below we outline the predictors that we found to be key for the prediction of the 2016 contribution:
-
-* NextDegreeBinary -  This variable indicates whether an individual obtained an advanced degree.  We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Having an advanced degree increases the prob of contribution by x....
-
-* Attendence event  - We see a statistically significant increase when individuals in our sample set  have an advanced degree.  Attending the event in our data increases the prob of contribution by x....
-
-* log(meandonation + 1) - The vairable is a log transformed average of an individual's contribution over the past four year.  Having a higher average donation increases the prob of contribution by...
-
-* gaveLastYear - A binary variable indicating whether an individual donated in 2015.  Donating in the prior year decreases 2016 prob of contribution by x...
-
-* log(meandonation + 1):gaveLastYear- interaction between average donation in prior years and donation indicator in 2015.  Higher historical average donations will have a higher contribution even if they donated in the prior year.
-
-* highvalLastYear - Binary variable indicating whether an individual donated more than 500 last year.  Individuals who were flagged as higher value doners in the prior years showed an increase of x....
-
 ## Modeling
 
-We examined both multinomial and ordinal regression models.  The multinominal model was utilized since our dependent variable are categorical.  Initially we started with a model with most of the original variables not excluded from our EDA.  Using an Anova test we see that all variables are statisitically significant in the model.  The model's overall AIC is 1471.  We split the data into a test and training set allowing us to predict the accuracy of the model.  Using a confusion matrix we see that overall accuracy is 59% versus a No information Baseline of 54%.  The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
+We examined both multinomial and ordinal regression models. In the following sections we explain our modelling steps, the model progression we went through and final model selection.
+
+## Explanation vs Prediction
+
+As we mentioned before, the overall goal of the current work is prediction of future donations rather than explanation of the factors that drive donation. Given that, we choose to choose models based on their predictive power rather than their explanatory power. 
+
+For the same reason, we take a machine learning approach to model welection, where We split the data into a test and training set allowing us to test the accuracy of the model. 
 
 
 ```{r}
@@ -407,47 +411,96 @@ train <- labdata[sample, ]
 test  <- labdata[-sample, ]
 ```
 
-###Initial Multinomial Model
+### Base Multinomial Model
+
+Even though our dependent variable is ordinal, it has a categorical nature and sometimes multinomial models can excel at modelling this data.
+
+Initially we started with a model with most of the original predictors from the data included in our EDA. 
+
 ```{r}
 mn.model <- multinom(FY16cat ~ AttendenceEvent + Gender + Class.Year  + Marital.Status + NextDegreeBinary + FY12Giving + FY13Giving + FY14Giving + FY15Giving, data=train)
 
 summary(mn.model)
-Anova(mn.model)
 
+```
+
+We can now do hypothesis testing, in this case through analysis of variance.
+
+```{r}
+Anova(mn.model)
+```
+
+Using analysis of variance test we obtain the analysis of deviance table, where we can see that for all variables except for FY14Giving and Gender, we can reject the null hypothesis that the $\beta$ parameter for those predictors is $0$.
+
+To understand strengths and weaknesses of our base model, we use a confusion matrix, which provides rich information about what categories we fail to predict, where we do well, etc.
+
+```{r}
 mn.preds <- predict(mn.model, test, type="class")
 confusionMatrix(mn.preds, test$FY16cat)
 ```
 
 
-### Multinomial Model
-After adding some engineered features we were able to reduce the model AIC to 1168 and reduce the features from 9 to 5.  Reducing the number of features should help with not overfitting the model on a relatively small sample set.  We removed marital status because of small sample sizes for the Widow and Divorced groups.  The addition of log(meandonation+1) and gaveLastYear provide prior donation history and are highly significant in the model based on the Anova test.  The confusion matrix shows a greatly improved overall acuracy with at 67.6% with a 95% confidence between 61.4% and 73.3%.  We also see an improvement in the sensitivity for the highest doner group.  It is important to be able to identify individuals in this group since they account for ~77% of donations in 2016. 
+The confusion matrix shows that the model is better at predicting the [0,1) and the [500, 2e+05) groups and has trouble with the middle groups, specifically the [250,500).  This group has a small sample size in our dataset which would make this group harder to predict.
+
+
+## Multinomial Model
+
+We now aim to improve our model using engineers features from our EDA. Interestingly, features that we believed would increase our predictive power, actually had a very positive impact in the overall performance of our model.
 
 ```{r}
 mn.model <- multinom(FY16cat ~ AttendenceEvent + Gender + NextDegreeBinary + as.ordered(YearsSinceGrad) + log(meandonation+1) * gaveLastYear, data=train)
-
 summary(mn.model)
-Anova(mn.model)
+```
+f
+We can see that were able to reduce the model AIC to 1168 and reduce the features. Reducing the number of features should help with not overfitting the model on a relatively small sample set. We removed marital status because of small sample sizes for the Widow and Divorced groups. The addition of $log(meandonation+1)$ and $gaveLastYear$ provide powerful and yet concise insights on the past donation history.
 
+```{r}
+Anova(mn.model)
+```
+
+Analyzing the deviance table, we can boserve that attendence to recruiting events and years since graduation do not pass the likelihood test, accepting the null hypothesis that the coefficient for those predictors is zero. However, from a domain knowledge perspective we feel that those variables are important, and that is confirmed by the improved prediction power of our model, which we can analyze by showing its confusion matrix.
+
+```{r}
 mn.preds <- predict(mn.model, test, type="class")
 confusionMatrix(mn.preds, test$FY16cat)
 ```
 
-### Ordinal Model
-Our final model was an oridinal model.  The ordinal model improved slightly on overall accuracy with our test set scoring a 68.8%, however this was not significantly different from our prior multinomial model.  Where the ordinal did improve was the sensitivity/specificity scores for the highest doner groups and the non doner group.  Along with overall accuracy our final evaluation focused correctly identifying the top group because of the large portion of donations they accounted in additon to correctly identifying the zero dollar doners who account for a largest category of doners.  The ordinal model also maintain the parsimony of the previous model, which as noted previously should help against overfitting on a small training/test set.
+The confusion matrix shows a greatly improved overall acuracy with at 67.6% with a 95% confidence between 61.4% and 73.3%.  We also see an improvement in the sensitivity for the highest donor group, which to us is one of the most important groups to get correctly predicted. It is important to be able to identify individuals in this group since they account for ~77% of donations in 2016.
+
+## Ordinal Model
+
+Our final model was an oridinal model, using the same predictors as our improved multinomial model. The ordinal model improved slightly on overall accuracy with our test set scoring a 68.8%. The ordinal model showed improvements particularly the sensitivity and specificity scores for the highest donor and the non-donor groups. 
+
+### Final Model Selection: Ordinal model
+
+To select and compare models, we used statistical analysis such as AIC and hypothesis testing, but also we took a holistic approach by analyzing confusion matrices for each model and understanding and interpreting each model's strengths and weaknesses. Particularly, we felt that detecting individuals that donated in the highest amount group and individuals that don't donate at all was very valuable, while differentiating between the two middle donation brackets was not so important. Not only that, but ~70% of donations during 2016 were in the highest bracket and the non-donor group was the majority of our sample, so even a better reason to prioritize the correct prediction of those group. Confusion matrices allow us to compare how each model did on each group, which is valuable given our approach. 
 
 ```{r}
 ord.model <- clm(FY16cat ~ AttendenceEvent + Gender + NextDegreeBinary + as.ordered(YearsSinceGrad) + log(meandonation+1) * gaveLastYear, data=train)
-
 summary(ord.model)
-Anova(ord.model)
+```
 
+
+Note that the ordinal model also maintains the parsimony of the previous model, using the same predictors. We can observe that most variables are statistically significant, except for attendenceEven, Gender, and some levels of the years since graduation. However, these variables proved to be quite valuable in our EDA, and furthermore we did formal hypothesis testing of removing them, and the model with them proved to be better, and also had better predictive power which again is our focus in this study.
+
+```{r}
+Anova(ord.model)
+```
+
+We can now analyze the analysis of deviance table above for the ordinal model, where the null hypothesis is that the $\beta$ coefficient for each predictor is $0$ and the alternate hypothesis is that $\beta \ne 0$. Note that we fail to reject the null hypothesis for the $log(meandonation + 1)$ and for the interaction term. However these terms proved to have great predictive power, and greatly increase the parsimony of our model. 
+
+```{r}
 ord.preds <- predict(ord.model, test, type="class")
 confusionMatrix(ord.preds$fit, test$FY16cat)
 ```
 
-## Section 4
+We can observe that this confusion matrix yields not only the best accuracy of all our models, but also the best predictions for the highest and lowest donation bracket, which is aligned with our goals for this study.
 
-In our analysis we have shown the relationships between several independent varaibles and the 2016 donations of alumni, and shown our model to have good predictive power for several of the categories. Overall, our model is able to predict donors vs. non-donors with high accuracy. Both previous donation patterns, as well as other factors like attending alumni events and having an advanced degree, allow us to discriminate between those who donated nothing in 2016 and those who donated something.
+Another interesting thing about the ordinal model presented is that the failures to predict tend to be in categories that are close in terms of domain meaning, for example, a mispredicted high donator may really be a moderate donator, but errors tend to group around the nearby categories of the expected one. On the contrary in the multinomial model we observe slightly more deviation in the errors, which makes sense from an interpretative point of view since in the ordinal model we are bringing in information about the order of the output categories.
+
+## Final Remarks
+
+In our analysis we have shown the relationships between several independent variables and the 2016 donations of alumni, and shown our model to have good predictive power for several of the categories. Overall, our model is able to predict donors vs. non-donors with high accuracy. Both previous donation patterns, as well as other factors like attending alumni events and having an advanced degree, allow us to discriminate between those who donated nothing in 2016 and those who donated something.
 
 An additional goal of the model was to be able to predict which category of donation an alumnus would fall under, which would allow fundraising campaigns to not only target alumni who will donate but also pick out those who are likely to donate the most. In that regard our model fares more poorly. We are able to predict who will fall into the highest bucket of donation [500,2e+05) fairly well, as alumni who donate that much tend to do it on a yearly basis. However, our model struggled with accurately predicting the other three categories. A big reason for this is the sample size. Out of 1000 alumni, only 39 donated in the [250,500) category, which contributes to the lack of accuracy in predicting that particular category.
 
