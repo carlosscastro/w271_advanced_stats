@@ -53,49 +53,29 @@ library(nnet)
 library(caret)
 library(GGally)
 labdata <- read.csv('lab2data.csv')
+knitr::opts_chunk$set(fig.width=8, fig.height=3) 
 ```
 
 ## Feature engineering
 
 ```{r}
 #split major into STEM and non-STEM
-labdata$MajorType <- ifelse(labdata$Major=='Biology'|
-                              labdata$Major=='Economics'|
-                              labdata$Major=='Psychology'|
-                              labdata$Major=='Physics'|
-                              labdata$Major=='Chemistry'|
-                              labdata$Major=='Mathematics'|
-                              labdata$Major=='General Science-Chemistry'|
-                              labdata$Major=='Economics-Business'|
-                              labdata$Major=='General Science-Chemistry'|
-                              labdata$Major=='Sociology-Anthropology'|
-                              labdata$Major=='General Science-Psycho'|
-                              labdata$Major=='General Science-Math'|
-                              labdata$Major=='General Science-Biology'|
-                              labdata$Major=='Computer Science'|
-                              labdata$Major=='General Science'|
-                              labdata$Major=='Mathematics-Physics'|
-                              labdata$Major=='Economics-Regional Stds.'|
-                              labdata$Major=='Zoology'|
-                              labdata$Major=='Engineering'|
-                              labdata$Major=='Sociology'|
-                              labdata$Major=='Anthropology'|
-                              labdata$Major=='General Science-Physics',
+labdata$MajorType <- ifelse(labdata$Major=='Biology'|labdata$Major=='Economics'|
+labdata$Major=='Psychology'|labdata$Major=='Physics'|
+labdata$Major=='Chemistry'|labdata$Major=='Mathematics'|
+labdata$Major=='General Science-Chemistry'|labdata$Major=='Economics-Business'|
+labdata$Major=='General Science-Chemistry'|labdata$Major=='Sociology-Anthropology'|
+labdata$Major=='General Science-Psycho'|labdata$Major=='General Science-Math'|
+labdata$Major=='General Science-Biology'|labdata$Major=='Computer Science'|
+labdata$Major=='General Science'|labdata$Major=='Mathematics-Physics'|
+labdata$Major=='Economics-Regional Stds.'|labdata$Major=='Zoology'|
+labdata$Major=='Engineering'|labdata$Major=='Sociology'|
+labdata$Major=='Anthropology'|labdata$Major=='General Science-Physics',
                             "STEM", "Non-STEM")
 
-#create variable nextDegreeType to categorize the most common next degrees
-labdata$NextDegreeType <- ifelse(labdata$Next.Degree=='JD', 'JD',
-                         ifelse(labdata$Next.Degree=='MA', 'MA', 
-                         ifelse(labdata$Next.Degree=='PHD', 'PHD',
-                        ifelse(labdata$Next.Degree=='NDA', 'NDA',
-                               ifelse(labdata$Next.Degree=='MS', 'MS',
-                                      ifelse(labdata$Next.Degree=='MD', 'MD',
-                                             ifelse(labdata$Next.Degree=='MBA', 'MBA', 
-         ifelse(labdata$Next.Degree=='NONE', 'NONE', 'Other'))))))))
 
 #create simpler variable to represent if someone has an advanced degree or not
 labdata$NextDegreeBinary <- ifelse(labdata$Next.Degree=='NONE', 0, 1)
-
 
 #create buckets for all years
 labdata$FY16cat <- cut(labdata$FY16Giving, c(0,1,100,250,500,200000), right=F)
@@ -107,54 +87,19 @@ labdata$FY12cat <- cut(labdata$FY12Giving, c(0,1,100,250,500,200000), right=F)
 #turn class year into years since grad to make interpretaion easier
 labdata$YearsSinceGrad <- 2017 - labdata$Class.Year
 
-
 #loop through data to get each person's mean donation over the past 4 years
-#and how many of the past years they've donated
 labdata$meandonation <- NA
-labdata$nPastYears <- NA
 for (i in c(1:1000)){
   labdata[i,]$meandonation<-mean(c(labdata[i,]$FY12Giving, 
                                     labdata[i,]$FY13Giving, 
                                     labdata[i,]$FY14Giving,
                                     labdata[i,]$FY15Giving))
-  
-  labdata[i,]$nPastYears <- sum(c(labdata[i,]$FY12Giving>0, 
-                                  labdata[i,]$FY13Giving>0,
-                                  labdata[i,]$FY14Giving>0,
-                                  labdata[i,]$FY15Giving>0))
 }
-
-#binary variable - have they donated before or not?
-labdata$past_binary <- ifelse(labdata$meandonation == 0,0,1)
-
-#did they donate last year?
-labdata$donatedLastYear <- ifelse(labdata$FY15Giving==0, 0, 1)
-
-#how many of the past 4 years, consecutively, did they donate?
-#note that this will give a 0 for those that donated 2012-2014 but NOT 2015
-#since we're asking for consecutive years
-labdata$nPastConsecutiveYears <- ifelse(labdata$FY15Giving==0, 0,
-                                        ifelse(labdata$FY14Giving==0,1,
-                                               ifelse(labdata$FY13Giving==0,2,
-                                                      ifelse(labdata$FY12Giving==0,3,4))))
 
 #did they give in 2015 or not?
 labdata$gaveLastYear <- ifelse(labdata$FY15Giving==0,0,1)
-
-
 ```
 
-
-
-```{r}
-labdata$donatedLastYear <- ifelse(labdata$FY15Giving==0, 0, 1)
-
-labdata$nPastConsecutiveYears <- ifelse(labdata$FY15Giving==0, 0,
-                                        ifelse(labdata$FY14Giving==0,1,
-                                               ifelse(labdata$FY13Giving==0,2,
-                                                      ifelse(labdata$FY12Giving==0,3,4))))
-labdata$gaveLastYear <- ifelse(labdata$FY15Giving==0,0,1)
-```
 
 
 ## EDA Univariate analysis
@@ -238,110 +183,123 @@ The variable mean donation, which represents each alumnus' mean donation from 20
 ###Parallel coordinate plot
 
 ```{r}
-ggparcoord(labdata, columns = c(2, 3, 4, 7, 9, 10, 11, 15, 17, 22, 23), groupColumn = "FY16cat", scale = "uniminmax", scaleSummary = "center", title = "FY16GivingCat: Parallel Coordinate Plot") + theme(axis.text.x = element_text(angle = 90))
+ggparcoord(labdata, columns = c(2, 3, 4, 7, 8, 9, 10, 11, 13, 14, 21), groupColumn = "FY16cat", scale = "uniminmax", scaleSummary = "center", title = "FY16GivingCat: Parallel Coordinate Plot") + theme(axis.text.x = element_text(angle = 90))
 ```
 
-###Major type - STEM vs. Non-STEM
+
 
 ```{r}
-labdata_counts <- with(labdata,
-                       aggregate(MajorType,
-                                 list(MajorType=MajorType),
-                                 length))
-labdata_agg <- with(labdata,
-                    aggregate(MajorType, list(MajorType=MajorType,
-                                            FY16cat=FY16cat),
-                    length))
+#code to set up visualizations
+labdata_counts <- with(labdata,aggregate(MajorType,list(MajorType=MajorType),length))
+labdata_agg <- with(labdata, aggregate(MajorType, list(MajorType=MajorType,
+                                            FY16cat=FY16cat),length))
 labdata_agg <- merge(labdata_agg, labdata_counts, by="MajorType")
 labdata_agg <- setNames(labdata_agg, c("MajorType", "FY16cat", "Count", "TotalCount"))
 labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
 labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
       levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
 
-ggp <- ggplot(labdata_agg, aes(x=MajorType,y=percent))
-
-ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+ggp_MajorType <- ggplot(labdata_agg, aes(x=MajorType,y=percent))+ geom_bar(stat="identity", aes(fill=FY16cat))+
   ylab("% of alumni in each category")+xlab("Years since graduation")+
   scale_fill_discrete(name="Donation Category for 2016")
-```
 
-Major type does not seem to have an effect on the donation amount of an alumnnus, as the distribution of donation categories appears virtually identical regardless of whether they graduated with a STEM or non-STEM degree.
-
-
-
-###Next Degree (binary)  
-
-```{r}
-labdata_counts <- with(labdata,
-                       aggregate(YearsSinceGrad,
-                                 list(YearsSinceGrad=YearsSinceGrad),
-                                 length))
-labdata_agg <- with(labdata,
-                    aggregate(YearsSinceGrad, list(YearsSinceGrad=YearsSinceGrad,
-                                            FY16cat=FY16cat),
-                    length))
+labdata_counts <- with(labdata,aggregate(YearsSinceGrad,list(YearsSinceGrad=YearsSinceGrad),length))
+labdata_agg <- with(labdata,aggregate(YearsSinceGrad, list(YearsSinceGrad=YearsSinceGrad,FY16cat=FY16cat),length))
 labdata_agg <- merge(labdata_agg, labdata_counts, by="YearsSinceGrad")
 labdata_agg <- setNames(labdata_agg, c("YearsSinceGrad", "FY16cat", "Count", "TotalCount"))
 labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
 labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
       levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
 
-ggp <- ggplot(labdata_agg, aes(x=YearsSinceGrad,y=percent))
-
-ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+ggp_yearsincegrad <- ggplot(labdata_agg, aes(x=YearsSinceGrad,y=percent))+ geom_bar(stat="identity", aes(fill=FY16cat))+
   ylab("% of alumni in each category")+xlab("Years since graduation")+
   scale_fill_discrete(name="Donation Category for 2016")
-```
-A clear ordinal relationship between years since grad and the amount donated in 2016 is shown in the violin plot, where those that graduated longer ago are more likely to not be in the [0,1] category and more likely to be in higher donation categories as well.
 
-###Gender
-
-```{r}
-labdata_counts <- with(labdata,
-                       aggregate(Gender,
-                                 list(Gender=Gender),
-                                 length))
-labdata_agg <- with(labdata,
-                    aggregate(Gender, list(Gender=Gender,
-                                            FY16cat=FY16cat),
-                    length))
+labdata_counts <- with(labdata,aggregate(Gender,list(Gender=Gender),length))
+labdata_agg <- with(labdata,aggregate(Gender, list(Gender=Gender,FY16cat=FY16cat),length))
 labdata_agg <- merge(labdata_agg, labdata_counts, by="Gender")
 labdata_agg <- setNames(labdata_agg, c("Gender", "FY16cat", "Count", "TotalCount"))
 labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
 labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
       levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
 
-ggp <- ggplot(labdata_agg, aes(x=Gender,y=percent))
-
-ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+ggp_gender <- ggplot(labdata_agg, aes(x=Gender,y=percent))+
+  geom_bar(stat="identity", aes(fill=FY16cat))+
   ylab("% of alumni in each category")+xlab("Gender")+
-  scale_fill_discrete(name="Donation Category for 2016")
-```
+  scale_fill_discrete(name="Donation Category for 2016")+guides(fill=F)
 
-Men appear to be more likely to donate in the top 3 categories, while women appear to be more likely to donate in the [1,100) category. Interestingly, both men and women appear to be just as likely to donate nothing. This may suggest that gender would be more useful for a multinomial model instead of an ordinal model.
-
-###Attendance event
-```{r}
-labdata_counts <- with(labdata,
-                       aggregate(AttendenceEvent,
-                                 list(AttendenceEvent=AttendenceEvent),
-                                 length))
-labdata_agg <- with(labdata,
-                    aggregate(AttendenceEvent, list(AttendenceEvent=AttendenceEvent,
-                                            FY16cat=FY16cat),
-                    length))
+labdata_counts <- with(labdata,aggregate(AttendenceEvent,list(AttendenceEvent=AttendenceEvent),length))
+labdata_agg <- with(labdata,aggregate(AttendenceEvent, list(AttendenceEvent=AttendenceEvent,FY16cat=FY16cat),length))
 labdata_agg <- merge(labdata_agg, labdata_counts, by="AttendenceEvent")
 labdata_agg <- setNames(labdata_agg, c("AttendenceEvent", "FY16cat", "Count", "TotalCount"))
 labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
 labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
       levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
 
-ggp <- ggplot(labdata_agg, aes(x=as.factor(AttendenceEvent),y=percent))
-
-ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
+ggp_aevent <- ggplot(labdata_agg, aes(x=as.factor(AttendenceEvent),y=percent))+ geom_bar(stat="identity", aes(fill=FY16cat))+
   ylab("% of alumni in each category")+xlab("Donation category for 2015")+
   scale_fill_discrete(name="Donation Category for 2016")+
   xlab("Attendance Event")+scale_x_discrete(labels=c("Didn't Attend", "Attended"))
+
+labdata_counts <- with(labdata,aggregate(NextDegreeBinary,list(NextDegreeBinary=NextDegreeBinary),length))
+labdata_agg <- with(labdata,aggregate(NextDegreeBinary, list(NextDegreeBinary=NextDegreeBinary,FY16cat=FY16cat),length))
+labdata_agg <- merge(labdata_agg, labdata_counts, by="NextDegreeBinary")
+labdata_agg <- setNames(labdata_agg, c("NextDegreeBinary", "FY16cat", "Count", "TotalCount"))
+labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
+labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
+      levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
+
+ggp_nextdegree <- ggplot(labdata_agg, aes(x=as.factor(NextDegreeBinary),y=percent))+ geom_bar(stat="identity", aes(fill=FY16cat))+
+  ylab("% of alumni in each category")+xlab("Donation category for 2015")+
+  scale_fill_discrete(name="Donation Category for 2016")+
+  xlab("")+scale_x_discrete(labels=c("No Advanced Degree", "Advanced Degree"))
+
+labdata_counts <- with(labdata,aggregate(FY15cat,list(FY15cat=FY15cat),length))
+labdata_agg <- with(labdata,aggregate(FY15cat, list(FY15cat=FY15cat,FY16cat=FY16cat),
+                    length))
+labdata_agg <- merge(labdata_agg, labdata_counts, by="FY15cat")
+labdata_agg <- setNames(labdata_agg, c("FY15cat", "FY16cat", "Count", "TotalCount"))
+labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
+labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
+      levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
+
+ggp_FY15cat <- ggplot(labdata_agg, aes(x=FY15cat,y=percent))+ geom_bar(stat="identity", aes(fill=FY16cat))+
+  ylab("% of alumni in each category")+xlab("Donation category for 2015")+
+  scale_fill_discrete(name="Donation Category for 2016")
+```
+
+###Major type - STEM vs. Non-STEM
+```{r}
+ggp_MajorType
+```
+Major type does not seem to have an effect on the donation amount of an alumnnus, as the distribution of donation categories appears virtually identical regardless of whether they graduated with a STEM or non-STEM degree.
+
+
+
+###Next Degree (binary)  
+```{r}
+ggp_nextdegree
+```
+
+Across all donation categories, those with an advanced degree were much more likely to donate.
+
+###Years since graduation
+```{r}
+ggp_yearsincegrad
+```
+A clear ordinal relationship between years since grad and the amount donated in 2016 is shown in the violin plot, where those that graduated longer ago are more likely to not be in the [0,1] category and more likely to be in higher donation categories as well.
+
+###Gender
+
+```{r}
+ggp_gender
+```
+
+Men appear to be more likely to donate in the top 3 categories, while women appear to be more likely to donate in the [1,100) category. Interestingly, both men and women appear to be just as likely to donate nothing. This may suggest that gender would be more useful for a multinomial model instead of an ordinal model.
+
+###Attendance event
+```{r}
+ggp_aevent
 ```
 
 Those who went to alumni events were much more likely to donate and especially more likely to donate in the higher categories.
@@ -350,25 +308,7 @@ Those who went to alumni events were much more likely to donate and especially m
 
 ###Donation category for the previous year (2015)
 ```{r}
-labdata_counts <- with(labdata,
-                       aggregate(FY15cat,
-                                 list(FY15cat=FY15cat),
-                                 length))
-labdata_agg <- with(labdata,
-                    aggregate(FY15cat, list(FY15cat=FY15cat,
-                                            FY16cat=FY16cat),
-                    length))
-labdata_agg <- merge(labdata_agg, labdata_counts, by="FY15cat")
-labdata_agg <- setNames(labdata_agg, c("FY15cat", "FY16cat", "Count", "TotalCount"))
-labdata_agg$percent <- 100*labdata_agg$Count/labdata_agg$TotalCount
-labdata_agg$FY16cat <- factor(labdata_agg$FY16cat,
-      levels=c("[500,2e+05)","[250,500)","[100,250)","[1,100)","[0,1)"))
-
-ggp <- ggplot(labdata_agg, aes(x=FY15cat,y=percent))
-
-ggp + geom_bar(stat="identity", aes(fill=FY16cat))+
-  ylab("% of alumni in each category")+xlab("Donation category for 2015")+
-  scale_fill_discrete(name="Donation Category for 2016")
+ggp_FY15cat
 ```
 
 This stacked bar graph shows what proportion of alumni that fit into donation category X went into the same - or different - category in 2016. As expected, the largest bar in each group represents the same category. That is, the majority of those who donated $0 in 2015 also donated $0 in 2016, the majority of those who donated between $1-$100 in 2015 stayed in that category the next year, etc.
