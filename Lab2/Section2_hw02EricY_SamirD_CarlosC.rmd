@@ -399,7 +399,7 @@ We can see that were able to reduce the model AIC to 1168 and reduce the feature
 Anova(mn.model)
 ```
 
-Analyzing the deviance table, we can boserve that attendence to recruiting events and years since graduation do not pass the likelihood test, accepting the null hypothesis that the coefficient for those predictors is zero. However, from a domain knowledge perspective we feel that those variables are important, and that is confirmed by the improved prediction power of our model, which we can analyze by showing its confusion matrix.
+Analyzing the deviance table, we can observe that attendence to recruiting events and years since graduation do not pass the likelihood test, accepting the null hypothesis that the coefficient for those predictors is zero. However, from a domain knowledge perspective we feel that those variables are important, and that is confirmed by the improved prediction power of our model, which we can analyze by showing its confusion matrix.
 
 ```{r}
 mn.preds <- predict(mn.model, test, type="class")
@@ -414,7 +414,7 @@ Our final model was an oridinal model, using the same predictors as our improved
 
 ### Final Model Selection: Ordinal model
 
-To select and compare models, we used statistical analysis such as AIC and hypothesis testing, but also we took a holistic approach by analyzing confusion matrices for each model and understanding and interpreting each model's strengths and weaknesses. Particularly, we felt that detecting individuals that donated in the highest amount group and individuals that don't donate at all was very valuable, while differentiating between the two middle donation brackets was not so important. Not only that, but ~70% of donations during 2016 were in the highest bracket and the non-donor group was the majority of our sample, so even a better reason to prioritize the correct prediction of those group. Confusion matrices allow us to compare how each model did on each group, which is valuable given our approach. 
+To select and compare models, we used statistical analysis such as AIC and hypothesis testing, but also we took a holistic approach by analyzing confusion matrices for each model and understanding and interpreting each model's strengths and weaknesses. Particularly, we felt that detecting individuals that donated in the highest amount group and individuals that don't donate at all was very valuable, while differentiating between the two middle donation brackets was not so important. Not only that, but ~77% of donations during 2016 were in the highest bracket and the non-donor group was the majority of our sample, so even a better reason to prioritize the correct prediction of those group. Confusion matrices allow us to compare how each model did on each group, which is valuable given our approach. 
 
 ```{r}
 ord.model <- clm(FY16cat ~ AttendenceEvent + Gender + NextDegreeBinary + as.ordered(YearsSinceGrad) + log(meandonation+1) * gaveLastYear, data=train)
