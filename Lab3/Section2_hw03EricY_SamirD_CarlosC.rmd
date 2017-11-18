@@ -99,7 +99,7 @@ With time series of different time frequencies, inevitably one may have to fill 
     
     B. the following questions in "xts FAQ"
         a. How do I create an xts index with millisecond precision?
-        b. OK, so now I have my millisecond series but I still can’t see the milliseconds displayed. What went wrong?
+        b. OK, so now I have my millisecond series but I still can't see the milliseconds displayed. What went wrong?
 
   2. Follow the following section of this document
 
@@ -162,7 +162,7 @@ We will use the same dataset "bls_unemployment.csv" that we used in the last liv
 
 ```{r}
 # Set working directory
-wd <-"~/Documents/Teach/Cal/w271/Labs/Lab3"
+wd <-"C:/Users/sdatta/Documents/MIDS_remote"
 setwd(wd)
 
 # Clean up the workspace before we begin
@@ -176,8 +176,6 @@ df <- read.csv("bls_unemployment.csv", header=TRUE, stringsAsFactors = FALSE)
   head(df)
   tail(df)
 
-#table(df$Series.id, useNA = "always")
-#table(df$Period, useNA = "always")
 
 # Convert a column of the data frame into a time-series object
 unemp <- ts(df$Value, start = c(2007,1), end = c(2017,1), frequency = 12)
@@ -304,15 +302,14 @@ A very common operation on time series is to take a difference of the series to 
 Let's use the ```unemp_xts``` series as examples:
 ```{r}
 str(unemp_xts)
-unemp_xts
- 
-diff(unemp_xts, lag = 1, difference = 1, log = FALSE, na.pad = TRUE)
+head(unemp_xts)
+head(diff(unemp_xts, lag = 1, difference = 1, log = FALSE, na.pad = TRUE))
 
 # calculate the first difference of AirPass using lag and subtraction
 #AirPass - lag(AirPass, k = 1)
 
 # calculate the first order 12-month difference if AirPass
-diff(unemp_xts, lag = 12, differences = 1)
+head(diff(unemp_xts, lag = 12, differences = 1))
 ```
 
 # Task 4:
@@ -321,7 +318,7 @@ diff(unemp_xts, lag = 12, differences = 1)
     A. Section 3.4 of "xts: Extensible Time Series" by Jeffrey A. Ryan and Joshua M. Ulrich
     
     B. the following questions in "xts FAQ"
-        a. I am using apply() to run a custom function on my xts series. Why the returned matrix has di↵erent dimensions than the original one?
+        a. I am using apply() to run a custom function on my xts series. Why the returned matrix has different dimensions than the original one?
 
   2. Follow the following two sections of this document
 
@@ -498,8 +495,11 @@ AMAZ.Returns = c(NA, diff(amazon.data$AMAZ.Close, lag = 1, difference = 1, log =
 amazon.data = cbind(amazon.data, AMAZ.Returns)
 amazon.xts = xts(amazon.data[,2:7], order.by = as.Date(amazon.data$Index))
 
-# TODO: GGPLOT + legend + title
-plot(amazon.xts$AMAZ.Returns, type = 'l')
+
+library(ggplot2)
+theme_set(theme_bw(base_size = 13))
+ggp <- ggplot(amazon.xts, aes(x=Index, y=AMAZ.Returns))
+ggp + geom_line() + ylab("Amazon Daily Return")+xlab("Year")+ggtitle("Daily Return of Amazon Closing Price")
 ```
 
 5. Create a 20-day and a 50-day rolling mean series from the AMAZ.close series.
@@ -509,9 +509,25 @@ amaz.close = cbind(amazon.xts[,4], rollapply(amazon.xts[, 4], 20, FUN = mean, na
 colnames(amaz.close) = c('ClosingPrice', 'TwentyDayRolling', 'FiftyDayRolling')
 tail(amaz.close)
 
-# TODO: GGPLOT + legend + title
-plot(amaz.close$TwentyDayRolling)
-lines(amaz.close$FiftyDayRolling, col = "green")
-lines(amaz.close$ClosingPrice, col = "blue")
+df1 <- data.frame(time=index(amaz.close), n=amaz.close$ClosingPrice, Value="Original Values", size=1) 
+colnames(df1) <- c("time", "n", "Value", "size")
+df2 <- data.frame(time=index(amaz.close), n=amaz.close$TwentyDayRolling, Value="20-day Rolling Mean", size=2)
+colnames(df2) <- c("time", "n", "Value", "size")
+df3 <- data.frame(time=index(amaz.close), n=amaz.close$FiftyDayRolling, Value="50-day Rolling Mean", size=2) 
+colnames(df3) <- c("time", "n", "Value", "size")
+df.combined <- rbind(df1, df2, df3)
+
+
+
+ggp <- ggplot(df.combined, aes(x=time, y=n, group=Value, color=Value, size=size))
+ggp + geom_line() + 
+  scale_color_manual(values=c("black", "blue", "red"))+
+  ylab("Closing Price")+
+  xlab("Year")+ggtitle("Amazon Closing Price")+
+  scale_size_continuous(range=c(.5,1), guide='none')+
+  theme(legend.position="top")
 
 ```
+
+
+
