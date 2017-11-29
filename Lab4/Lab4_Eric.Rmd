@@ -1,0 +1,80 @@
+---
+title: "Lab4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+#Read in Data
+```{r}
+library(xts)
+library(tseries)
+library(forecast)
+
+ts_data = read.csv('Lab4-series2.csv')
+head(ts_data)
+length(ts_data[,1])
+
+ts_id <- seq(as.Date("1990/1/1"), by = "month", length.out = 311)
+tail(ts_id)
+
+xts_data <- xts(ts_data$x, order.by = ts_id)
+head(xts_data)
+```
+#Setup Train and Test
+```{r}
+train = xts_data["1990/2014"]
+colnames(train) = 'x'
+
+test = xts_data["2015"]
+colnames(test) = 'x'
+
+length(train[,1])
+length(test[,1])
+```
+
+#Explore Data
+```{r}
+plot(train$x, type = 'l', main = 'time series data')
+#I see both trend and seasonality in the data.  Looks like we peak in the beginning of the year and decline by the end of the year.  Alrternating positive/negative trends in ~5-7 year intervals.
+
+plot(rnorm(300, mean = 6), type = 'l', main = 'stationary example reference')
+#randomly distributed plot shows the difference between the data
+
+plot(diff(train$x)[2:300], type = 'l', main = 'first difference time series data')
+#Taking the first difference appears to create a more stationary series
+
+acf(train$x)
+#Gradual suggest an AR(1) model
+
+acf(diff(train$x)[2:300])
+#ACF of first difference does not result in white noise meaning that this is not a random walk.  Also note that the first different does not result in stationary data.
+
+acf(diff(diff(train$x)[2:300])[2:299])
+#Second Difference data is still not stationary.  Does this mean we need a seasonal model?
+
+pacf(train$x)
+#There are multiple significant lags for the PACF.  Lags 1,4,7,10,11,13
+
+adf.test(train$x)
+#Dicky Fuller test is unable to reject the null hypothesis that the data is non stationary.  More evidence of what we've already seen in acf/pacf and differencing of data.
+```
+
+#Model Exploration
+```{r}
+auto_mod <- auto.arima(train$x)
+summary(auto_mod)
+#Auto Arima funtion suggest the model is is ARIMA(1,1,4)
+
+acf(auto_mod$residuals)
+pacf(auto_mod$residuals)
+
+```
