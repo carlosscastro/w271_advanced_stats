@@ -27,8 +27,80 @@ ts_id <- seq(as.Date("1990/1/1"), by = "month", length.out = 311)
 tail(ts_id)
 
 xts_data <- xts(ts_data$x, order.by = ts_id)
-head(xts_data)
+tail(xts_data)
+
+colnames(xts_data) = 'x'
 ```
+
+#Explore Data
+```{r}
+plot(xts_data$x, type = 'l', main = 'time series data')
+#I see both trend and seasonality in the data.  Looks like we peak in the beginning of the year and decline by the end of the year.  Alrternating positive/negative trends in ~5-7 year intervals.
+
+monthplot(xts_data$x)
+#Month plot confirms that Q1 does average higher than the rest of the year.  We also see somewhat of an increase in July
+
+plot(rnorm(300, mean = 6), type = 'l', main = 'stationary example reference')
+#randomly distributed plot shows the difference between the data
+
+#plot(diff(train$x)[2:300], type = 'l', main = 'first difference time series data')
+#Taking the first difference appears to create a more stationary series
+
+acf(xts_data$x, 120)
+#Gradual suggest an AR(1) model
+
+#acf(diff(train$x)[2:300])
+#ACF of first difference does not result in white noise meaning that this is not a random walk.  Also note that the first different does not result in stationary data.
+
+#acf(diff(diff(train$x)[2:300])[2:299])
+#Second Difference data is still not stationary.  Does this mean we need a seasonal model?
+
+pacf(xts_data$x, 120)
+#There are multiple significant lags for the PACF.  Lags 1,4,7,10,11,13
+
+adf.test(xts_data$x)
+#Dicky Fuller test is unable to reject the null hypothesis that the data is non stationary.  More evidence of what we've already seen in acf/pacf and differencing of data.
+
+
+#Try Seasonal Differencing here
+
+
+```
+```{r}
+
+length(xts_data)
+#EDA Continued
+#Try Seasonal Differencing Here
+x.yd = diff(xts_data$x, lag =12)[13:311]
+
+plot(x.yd, main = 'Yearly Difference Plot')
+#We still see a trend but seasonality looks like its been removed to a degree.
+
+monthplot(x.yd)
+#Taking the seasonal difference gives us an almost flat mean for each month.  Seems like this has deseasoned the data well.  Big D = 1
+
+acf(x.yd, 48)
+#The acf still looks like a random walk based on the gradual decrease in acf
+
+pacf(x.yd, 48)
+#Lags at 13 and 37?  Not sure how to interpret this
+
+x.yd.df = diff(x.yd)[2:299]
+
+plot(x.yd.df, main = 'D=1, d=1 time series')
+#Plot looks much more stationary
+
+monthplot(x.yd.df)
+#Month plot still appears relatively stationary however less so then jsut using the seasonal difference
+
+acf(x.yd.df, 120)
+#Acf looks much more stationary now with the second difference.  Last meaningful spike around lag 5
+
+pacf(x.yd.df, 120)
+#We see a spike for multiples of 12 (yearly) up to 60, 5 yearly lags
+
+```
+
 #Setup Train and Test
 ```{r}
 train = xts_data["1990/2014"]
@@ -41,40 +113,72 @@ length(train[,1])
 length(test[,1])
 ```
 
-#Explore Data
+#Model Exploration Seasonal Parameters
 ```{r}
-plot(train$x, type = 'l', main = 'time series data')
-#I see both trend and seasonality in the data.  Looks like we peak in the beginning of the year and decline by the end of the year.  Alrternating positive/negative trends in ~5-7 year intervals.
+#Start with loop to identify P/Q with D=1
+#Do we need a period parameter, when i set it equal to 12 there were errors
+for (P in 0:5){
+  for (Q in 0:5){
+    mod = Arima(train$x, order = c(0,0,0),
+                seasonal = list(order = c(P,1,Q)), method = 'ML')
+    if ((P == 0) & (Q == 0)) {mod_results = data.frame(P,Q, mod$aic)
+    colnames(mod_results) = c("P_var", "Q_var", "AIC")} 
+    else {mod_results = rbind(mod_results, c(P,Q,mod$aic))}
+    #mod_results = rbind(mod_results, c(P,Q,mod$aic))
+    #print(c(P,Q,mod$aic))
+  }
+}
 
-plot(rnorm(300, mean = 6), type = 'l', main = 'stationary example reference')
-#randomly distributed plot shows the difference between the data
-
-plot(diff(train$x)[2:300], type = 'l', main = 'first difference time series data')
-#Taking the first difference appears to create a more stationary series
-
-acf(train$x)
-#Gradual suggest an AR(1) model
-
-acf(diff(train$x)[2:300])
-#ACF of first difference does not result in white noise meaning that this is not a random walk.  Also note that the first different does not result in stationary data.
-
-acf(diff(diff(train$x)[2:300])[2:299])
-#Second Difference data is still not stationary.  Does this mean we need a seasonal model?
-
-pacf(train$x)
-#There are multiple significant lags for the PACF.  Lags 1,4,7,10,11,13
-
-adf.test(train$x)
-#Dicky Fuller test is unable to reject the null hypothesis that the data is non stationary.  More evidence of what we've already seen in acf/pacf and differencing of data.
+mod_results[order(mod_results$AIC),]
+#Sorted dataframe shows P=5/D=1/Q=4 as best model
 ```
 
-#Model Exploration
+#Model Exploration Non-Seasonal Parameters
 ```{r}
-auto_mod <- auto.arima(train$x)
-summary(auto_mod)
-#Auto Arima funtion suggest the model is is ARIMA(1,1,4)
+#Start with loop to identify p/q with d=1 and P = 4, D = 1, Q = 4
+for (p in 0:5){
+  for (q in 0:5){
+    mod2 = Arima(train$x, order = c(p,1,q),
+                seasonal = list(order = c(4,1,4)), method = 'ML')
+    if ((p == 0) & (q == 0)) {mod2_results = data.frame(p,q, mod2$aic)
+    colnames(mod2_results) = c("p_var", "q_var", "AIC")} 
+    else {mod2_results = rbind(mod2_results, c(p,q,mod2$aic))}
 
-acf(auto_mod$residuals)
-pacf(auto_mod$residuals)
+  }
+}
+
+mod2_results[order(mod2_results$AIC),]
+#Sorted dataframe shows P=5/D=1/Q=4 as best model
+#AIC is the lowest by a significant amount
+```
+
+```{r}
+#Forecast Errors
+calculate_rmse <- function(fcast, test){
+  rmse <- sqrt(mean((fcast - test)^2))
+  print(rmse)
+}
+
+modfinal = Arima(train$x, order = c(5,1,4),
+                seasonal = list(order = c(4,1,4)), method = 'ML')
+
+mod.fcst <- forecast(modfinal, h = 11)
+
+plot(mod.fcst)
+
+calculate_rmse(mod.fcst$mean, ts_data[301:311,2])
+
+
+```
+#Residual Diagnostics
+```{r}
+
+#Residuals appear to be stationary
+plot(modfinal$residuals)
+
+acf(modfinal$residuals)
+
+pacf(modfinal$residuals)
+#some issues with the acf and pacf
 
 ```
