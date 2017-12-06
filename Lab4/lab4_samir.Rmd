@@ -1,0 +1,188 @@
+---
+title: "Lab 4"
+author: "Samir Datta"
+date: "December 5, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+library(forecast)
+library(reshape2)
+library(xts)
+library(tseries)
+setwd('C:/Users/Samir/Documents/MIDS/StatsF17/lab 4/')
+lab4data <- read.csv('Lab4-series2.csv')
+```
+
+
+#EDA
+```{r}
+months <- seq.Date(from=as.Date("1990-1-1"), 
+                   to=as.Date("2015-11-1"), by="month")
+xts_x <- xts(lab4data$x, order.by=months)
+plot(xts_x)
+```
+
+At first glance, appears to be very non-stationary with strong seasonal trends. Seasonal trends appear to be yearly.
+
+```{r}
+hist(xts_x)
+```
+
+Histogram doesn't seem to suggest any log transformations are necessary.
+
+```{r}
+acf(xts_x)
+```
+
+ACF has a gradual decline suggesting an AR model with p of at least 1 would be usful.
+
+```{r}
+pacf(xts_x)
+```
+
+The strongest PACF occurs at lag 13. (Does this confirm the yearly seasonal trend? I would have expected the significance at lag = 12) There are quite a few other significant PACFs at different lags which suggest non-seasonal , so we will have to test many different parameters.
+
+```{r}
+xts_x.diff = diff(xts_x)
+xts_x.diff <- xts_x.diff[!is.na(xts_x.diff)]
+plot(xts_x.diff)
+adf.test(xts_x.diff)
+```
+
+Plotting the first difference makes it stationary, which is seen from the plot and confirmed by the significance ADF test. But there are clear spikes from the seasonal trend we have to account for.
+
+```{r}
+acf(xts_x.diff)
+pacf(xts_x.diff)
+```
+
+Both the ACF and PACF for the differences series show a huge spike at lag 12 confirming the yearly seasonal trend.
+
+
+
+
+
+
+
+#Loop to find optimal ARIMA
+
+```{r, results="hide"}
+x_train <- lab4data[1:300,]$x
+x_test <- lab4data[301:311,]$x
+
+results = data.frame(p=NA, d=NA, q=NA, P=NA, D=NA, Q=NA, AIC=NA, RMSE=NA, MAPE=NA)
+upperLimit = 2
+start = Sys.time()
+for(p in 0:upperLimit){
+  for(d in 1:1){
+    for(q in 0:upperLimit){
+      for(P in 0:upperLimit){
+        for(D in 1:1){
+          for(Q in 0:upperLimit){
+tryCatch({Arima.out <- Arima(x_train, 
+                  order = c(p,d,q),
+                   seasonal = list(order=c(P,D,Q), period=12))
+AIC <- Arima.out$aic
+s <- as.data.frame(summary(Arima.out))
+RMSE <- s$RMSE
+MAPE <- s$MAPE
+}, warning = function(w){
+  AIC <- NA
+  RMSE <- NA
+  MAPE <- NA
+  }, error = function(e){
+  AIC <- NA
+  RMSE <- NA
+  MAPE <- NA
+})
+            
+result <- data.frame(p=p, d=d, q=q, P=P, D=D, Q=Q, AIC=AIC, RMSE=RMSE, MAPE=MAPE)
+results <- rbind(results, result)
+          }
+        }
+      }
+    }
+  }
+}
+results <- results[2:nrow(results),]
+end = Sys.time()
+end-start
+```
+
+```{r}
+results[results$AIC==min(results$AIC, na.rm=T),]
+results[results$RMSE==min(results$RMSE, na.rm=T),]
+results[results$MAPE==min(results$MAPE, na.rm=T),]
+```
+Using minimum AIC/RMSE/MAPE all gives different answers...
+
+```{r}
+model_final <- Arima.out <- Arima(lab4data[1:300,]$x, 
+                  order = c(2,1,1),
+                   seasonal = list(order=c(2,1,2), period=12))
+summary(model_final)
+```
+
+```{r}
+plot(model_final$residuals)
+acf(model_final$residuals)
+adf.test(model_final$residuals)
+```
+
+The residuals of the final model, based on the plot, ACF, and ADF test, are stationary.
+
+```{r}
+model_forecast <- forecast(model_final, h = 11)
+
+plot(model_forecast)
+predicted <- as.numeric(model_forecast$mean)
+actual <- lab4data[301:311,]$x
+
+mean(abs((actual-predicted)/actual) * 100)
+```
+
+
+```{r}
+model_final_df <- data.frame(actual = x_train, fitted = as.numeric(model_final$fitted))
+df_melt <- cbind(melt(model_final_df), rbind(cbind(1:300), cbind(1:300)))
+head(df_melt)
+colnames(df_melt) <- c("variable", "value", "t")
+df_melt$variable <- factor(df_melt$variable, levels=c("actual", "fitted"))
+
+ggp <- ggplot(df_melt, aes(x=t, y=value, group=variable, color=variable))
+ggp+geom_line(aes(linetype=variable))+
+  ggtitle("Actual and predicted values for training set")
+```
+
+```{r}
+model_forecast_df <- data.frame(actual = x_test, 
+                                forecasted = as.numeric(model_forecast$mean))
+df_melt <- cbind(melt(model_forecast_df), rbind(cbind(1:11), cbind(1:11)))
+head(df_melt)
+colnames(df_melt) <- c("variable", "value", "t")
+df_melt$variable <- factor(df_melt$variable, levels=c("actual", "forecasted"))
+
+ggp <- ggplot(df_melt, aes(x=t, y=value, group=variable, color=variable))
+ggp+geom_line(aes(linetype=variable))+
+  ggtitle("Actual and forecasted values for test set")
+```
+
+
+```{r}
+ts2 <- ts(lab4data[0:300,]$x, frequency=12)
+dsts2 <- seasadj(stl(ts2, s.window="periodic"))
+auto.arima.out <- auto.arima(dsts2, seasonal=T)
+summary(auto.arima.out)
+
+model_forecast <- forecast(auto.arima.out, h = 11)
+
+plot(model_forecast)
+```
+The autoarima function with seasonal decomposition has a much lower AIC, suggesting better in-sample fit, but the forecast looks bad. The coefficient of the seasonal component in the arima output is very small and not significant which probably explains the bad fit... not worth it?
