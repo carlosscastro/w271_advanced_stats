@@ -1,5 +1,7 @@
 ---
-title: "lab4_carlos"
+title: "Lab4: Time Series Data"
+author: "Eric Yang, Samir Datta, Carlos Castro"
+date: "October 25, 2017"
 output: pdf_document
 ---
 
@@ -41,8 +43,8 @@ colnames(time.series) = 'x'
 
 Let's first visualize the raw series:
 
-```{r}
-plot(time.series)
+```{r fig1, fig.height = 4, fig.width = 8}
+plot(time.series, main = 'Time Series Data')
 ```
 
 We observe strong seasonal trends with peaks on the same quarter of each year, plus general trends ranging from 5 to 10 years.
@@ -52,16 +54,16 @@ Let's now observe the ACF and PACF to understand more about the series.
 ## ACF
 
 
-```{r}
-acf(time.series)
+```{r fig2, fig.height = 4, fig.width = 8}
+acf(time.series, main= 'ACF of Time Series Data')
 ```
 
 The gradual decline at a reasonably steady pace suggests an AR model with $p \ge 1$.
 
 ## PACF
 
-```{r}
-pacf(time.series)
+```{r fig3, fig.height = 4, fig.width = 8}
+pacf(time.series, main= 'PACF of Time Series Data')
 ```
 
 In general, straightforward seasonal trends show a PACF with only a significant trend at lag $s$ where $s$ is the length of the season in lags. However, here the length of the season is $s = 12$, but the most significant PACF occurrences are observed at lags $1$ and $13$. This is likely a result from the longer term repeated up and down trends that we observe beyond the yearly seasonality. 
@@ -79,10 +81,10 @@ With a p-value $p > 0.05$ we fail to reject the null hypothesis that the data is
 
 We now consider differencing, given the non-stationarity we observe in the series.
 
-```{r}
+```{r fig4, fig.height = 3, fig.width = 8}
 #Try Seasonal Differencing Here
 d.time.series = diff(time.series$x, lag = 12)[13:311]
-plot(d.time.series)
+plot(d.time.series, main = 'Differeced Time Series Data, (D=1)')
 ```
 
 ```{r}
@@ -93,8 +95,8 @@ We can see that once differenced, the Dickey-Fuller test rejects the null hypoth
 
 Let's now analyze the monthly means for our differenced series.
 
-```{r}
-monthplot(d.time.series)
+```{r fig5, fig.height = 3.5, fig.width = 8}
+monthplot(d.time.series, main = 'Time Series Data by Month', ylab='Trend / Mean by Month')
 
 ```
 
@@ -184,9 +186,9 @@ summary(model)
 
 Now we analyze the residuals, including their to verify stationarity of residuals.
 
-```{r}
-plot(model$residuals)
-acf(model$residuals)
+```{r fig6, fig.height = 3.5, fig.width = 8}
+plot(model$residuals, main = 'Residuals Over Time', ylab = 'Values')
+acf(model$residuals, main = 'ACF of Residuals')
 adf.test(model$residuals)
 ```
 
@@ -194,7 +196,7 @@ A visual inspection of the residual series and its ACF suggests stationary resid
 
 Finally, we visually assess normality of the residuals using a qqplot:
 
-```{r}
+```{r fig7, fig.height = 3, fig.width = 8}
 qqnorm(model$residuals)
 qqline(model$residuals)
 ```
@@ -210,7 +212,7 @@ We will plot the actual vs. fitted values from our model based on the training s
 model <- Arima(train.time.series$x, order = c(2,1,1), seasonal = list(order = c(2, 1, 2), period = 12), method = 'ML')
 ```
 
-```{r}
+```{r fig8, fig.height = 3, fig.width = 8}
 model_df <- data.frame(actual = as.numeric(train.time.series$x), fitted = as.numeric(model$fitted))
 
 df_melt <- cbind(melt(model_df), rbind(cbind(1:300), cbind(1:300)))
@@ -227,7 +229,7 @@ Our model appears to do an excellent job fitting the data in-sample.
 
 We will now plot the 11 forecasted values.
 
-```{r}
+```{r fig9, fig.height = 3, fig.width = 8}
 model_forecast <- forecast(model, h = 11)
 model_forecast_df <- data.frame(actual = as.numeric(test.time.series$x), 
                                 forecasted = as.numeric(model_forecast$mean),
