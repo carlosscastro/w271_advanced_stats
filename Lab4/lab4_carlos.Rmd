@@ -127,13 +127,13 @@ We now iterate through parameter combinations and estimate and assess different 
 ```{r, results="hide"}
 results = data.frame(p=NA, q=NA, P=NA, Q=NA, AIC=NA, RMSE=NA, MAPE=NA)
 
-for (P in 0:4) {
-  for (Q in 0:4) {
+for (P in 0:2) {
+  for (Q in 0:2) {
     for (p in 0:4) {
       for (q in 0:4) {
         
         tryCatch({
-          model <- Arima(train.time.series$x, order = c(p, 1, q), seasonal = list(order = c(P,1,Q), period = 12), method = 'ML')
+          model <- Arima(train.time.series$x, order = c(p, 1, q), seasonal = list(order = c(P,1,Q), period = 12))
           AIC <- model$aic
           model.summary <- as.data.frame(summary(model))
           RMSE <- model.summary$RMSE
@@ -155,7 +155,6 @@ for (P in 0:4) {
   }
 }
 results <- results[2:nrow(results),]
-
 ```
 
 Let's now analyze which models are best if we choose the ones with the lowest AIC, or lowest MAPe or lowest RMSE:
