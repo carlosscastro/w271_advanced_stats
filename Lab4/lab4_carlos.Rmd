@@ -12,7 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 Here we load the data and construct the time series object.
 
 ```{r}
-
 # Load libraries
 library(xts)
 library(tseries)
@@ -132,15 +131,25 @@ for (P in 0:4) {
   for (Q in 0:4) {
     for (p in 0:4) {
       for (q in 0:4) {
-        model <- Arima(train.time.series$x, order = c(p, 1, q), seasonal = list(order = c(P,1,Q), period = 12), method = 'ML')
-        AIC <- model$aic
-        model.summary <- as.data.frame(summary(model))
-        RMSE <- model.summary$RMSE
-        MAPE <- model.summary$MAPE
         
-        result <- data.frame(p=p, q=q, P=P, Q=Q, AIC=AIC, RMSE=RMSE, MAPE=MAPE)
-        results <- rbind(results, result)
+        tryCatch({
+          model <- Arima(train.time.series$x, order = c(p, 1, q), seasonal = list(order = c(P,1,Q), period = 12), method = 'ML')
+          AIC <- model$aic
+          model.summary <- as.data.frame(summary(model))
+          RMSE <- model.summary$RMSE
+          MAPE <- model.summary$MAPE
           
+          result <- data.frame(p=p, q=q, P=P, Q=Q, AIC=AIC, RMSE=RMSE, MAPE=MAPE)
+          results <- rbind(results, result)
+        }, warning = function(w){
+          AIC <- NA
+          RMSE <- NA
+          MAPE <- NA
+          }, error = function(e){
+          AIC <- NA
+          RMSE <- NA
+          MAPE <- NA
+        })
       }
     }
   }
