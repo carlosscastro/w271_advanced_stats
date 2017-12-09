@@ -1,0 +1,192 @@
+---
+title: "lab4_carlos"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Loading
+
+Here we load the data and construct the time series object.
+
+```{r}
+
+# Load libraries
+library(xts)
+library(tseries)
+library(forecast)
+library(ggplot2)
+
+# Load data
+data = read.csv('Lab4-series2.csv')
+
+# Visualize a few records
+head(data)
+
+```
+
+The data has the lag number and the numeric value. Let's build the time series starting on 1/1/1990.
+
+```{r}
+sequence <- seq.Date(from=as.Date("1990-1-1"), to=as.Date("2015-11-1"), by="month")
+time.series <- xts(data$x, order.by = sequence)
+colnames(time.series) = 'x'
+```
+
+# Eda
+
+## Series plot
+
+Let's first visualize the raw series:
+
+```{r}
+plot(time.series)
+```
+
+We observe strong seasonal trends with peaks on the same quarter of each year, plus general trends ranging from 5 to 10 years.
+
+Lets now observe the ACF and PACF to understand more about the series.
+
+## ACF
+
+
+```{r}
+acf(time.series)
+```
+
+The gradual decline at a reaonsably steady pace suggests an AR model with $p \ge 1$.
+
+## PACF
+
+```{r}
+pacf(time.series)
+```
+
+In general, straightforward seasonal trends show a PACF with only a significant trend at lag $s$ where $s$ is the length of the season in lags. However, here the length of the season is $s = 12$, but the most significant PACF occurrences are observed at lags $1$ and $13$. This is likely a result from the longer term repeated up and down trends that we observe beyond the yearly seasonality. 
+
+## Dicky Fuller Test
+
+We now run a Dicky Fuller test on our series.
+
+```{r}
+adf.test(time.series$x)
+```
+With a p-value $p > 0.05$ we fail to reject the null hypothesis that the data is non-stationary. 
+
+## Differencing
+
+We now consider differencing, given the non-stationarity we observe in the series.
+
+```{r}
+#Try Seasonal Differencing Here
+d.time.series = diff(time.series$x, lag = 12)[13:311]
+plot(d.time.series)
+```
+
+```{r}
+adf.test(d.time.series$x)
+```
+
+We can see that once differenced, the Dickey-Fuller test rejects the null hypothesis that the series is non-stationary, suggesting $d = 1$. 
+
+Let's now analyze the monthly means for our differenced series.
+
+```{r}
+monthplot(d.time.series)
+
+```
+
+The montly means are quite flat, suggesting $D = 1$;
+
+
+# Models
+
+Now we work towards selecting a model and forecasting with it.
+
+## Methodology
+
+Given that we've chosen values for $D = 1$ and $d = 1$  in our EDA, we now proceed to build models with varying parameters for $p$ and $q$. We want to be able to forecast and avoid overfitting, so we use AIC as primary method to select a model, since we want to favor parsimonious models. Given similar AIC's, we'll also consider RMSE or MAPE. To test our forecasting capacity, we will divide the series into a train and test set.
+
+## Train and Test Set Partition
+
+```{r}
+# Train data will be from 1990 to 2014
+train.time.series = time.series["1990/2014"]
+colnames(train.time.series) = 'x'
+
+# We'll forecast the time series during 2015 to test our models
+test.time.series = time.series["2015"]
+colnames(test.time.series) = 'x'
+```
+
+## Parameter Selection
+
+We now iterate through parameter combinations and estimate and assess different models with those parameters.
+
+```{r, results="hide"}
+results = data.frame(p=NA, q=NA, P=NA, Q=NA, AIC=NA, RMSE=NA, MAPE=NA)
+
+for (P in 0:4) {
+  for (Q in 0:4) {
+    for (p in 0:4) {
+      for (q in 0:4) {
+        model <- Arima(train.time.series$x, order = c(p, 1, q), seasonal = list(order = c(P,1,Q), period = 12), method = 'ML')
+        AIC <- model$aic
+        model.summary <- as.data.frame(summary(model))
+        RMSE <- model.summary$RMSE
+        MAPE <- model.summary$MAPE
+        
+        result <- data.frame(p=p, q=q, P=P, Q=Q, AIC=AIC, RMSE=RMSE, MAPE=MAPE)
+        results <- rbind(results, result)
+          
+      }
+    }
+  }
+}
+results <- results[2:nrow(results),]
+
+```
+
+Let's now analyze which models are best if we choose the ones with the lowest AIC, or lowest MAPe or lowest RMSE:
+
+```{r}
+results[results$AIC==min(results$AIC, na.rm=T),]
+results[results$RMSE==min(results$RMSE, na.rm=T),]
+results[results$MAPE==min(results$MAPE, na.rm=T),]
+```
+
+
+Naturally, the model with the lowest AIC has lower order values for the parameters, which potentially might translate into less overfitting. Also it is worth noting that for the lowest AIC, the values for the RMSE and MAPE are less than 5% higher than the lowest MAPE and RMSE, meaning that the lowest AIC model is more parsimonious, and at the same time almost the same in terms of prediction errors. 
+
+Thus, the chosen model has the parameters $p = 2$, $q = 1$, $P = 0$, $Q = 1$, $D = 1$ and $d = 1$.
+
+## Final Model
+
+```{r}
+model <- Arima(train.time.series$x, order = c(2, 1, 1), seasonal = list(order = c(0, 1,1), period = 12), method = 'ML')
+summary(model)
+```
+
+## Error Analysis
+
+Now we analyze the residuals, including their to verify stationarity of residuals.
+
+```{r}
+plot(model$residuals)
+acf(model$residuals)
+adf.test(model$residuals)
+```
+
+A visual inspection of the residual series and its ACF suggests stationary residuals. Moreover, when performing Dickey-Fuller test we reject the null hypothesis that the residuals are non-stationary.
+
+Finally, we visually assess normality of the residuals using a qqplot:
+
+```{r}
+qqnorm(model$residuals)
+qqline(model$residuals)
+```
+
+And indeed, a visual inspection suggests normality, supporting the other results obtained.
+
