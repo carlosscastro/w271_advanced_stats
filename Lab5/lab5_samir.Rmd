@@ -18,6 +18,19 @@ drivedata <- data
 bac, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc
 
 
+#Structure of the data
+
+```{r}
+head(drivedata)
+unique(drivedata$year)
+unique(drivedata$state)
+```
+
+The data is in long form. There are 25 rows per state, each representing a different year from 1980 to 2005. The data description data frame tells us that the "state" variable is a number that simply represents the 50 states in alphabetical order.
+
+Some variables like the BAC and seatbelt law variable have more than two levels represented by multiple dummy coded variables. For example, BAC has three levels - no BAC law, BAC limit = .08, and BAC limit = .10. These three levels are coded in the two variables bac08 and bac10. Each of the years is also dummy coded in its own column.
+
+An odd fluke in the data noticed above that there is no state number 2. The number is suppose to represent the states in alphabetical order, but 2 is skipped and the maximum number is 51 instead of 50. This will not affect our modeling in any way since the number is effectively a categorical variable and the values don't matter.
 
 
 #EDA
