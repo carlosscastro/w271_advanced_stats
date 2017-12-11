@@ -1,0 +1,227 @@
+---
+title: "lab5_samir"
+author: "Samir Datta"
+date: "December 10, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(reshape2)
+load("driving.Rdata")
+drivedata <- data
+```
+bac, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc
+
+
+
+
+#EDA
+
+##Total fatality rate
+The primary variable of interest is "totfatrte", the total fatalities per 100,000 population.
+
+```{r}
+hist(drivedata$totfatrte, main="Histogram of total fatality per 100k")
+```
+
+The data has a slight positive skew. Note that this histogram is of all values of total fatality rate, across all states and years.
+
+
+```{r}
+ggplot(drivedata, aes(x=state, y=totfatrte, group=state)) + geom_boxplot()+
+ylab("Total fatality rate")+xlab("State number")+ggtitle("Boxplot of total fatality rate per state")
+```
+
+Clearly, each state has different fatality rates, and some states simply have higher or lower rates regardless of the year or other variables.
+
+
+```{r}
+drivedata$statebucket <- cut(drivedata$state, 9)
+
+ggplot(drivedata, aes(x=year, y=totfatrte, group=as.factor(state), color=as.factor(state%%9)))+geom_point()+
+  geom_line()+facet_wrap(~as.factor(statebucket), scales="free")+
+  ylab("Total Fatality Rate")+guides(fill=F)+
+  ggtitle("Fatality rates from 1980-2005 for each state")
+```
+
+
+The above plot shows the fatality rates from 1980-205. Each set of dots connected with lines represents the data for a different state. 9 separate graphs are shown simply for the sake of avoiding clutter - the states have been binned by the number in the dataset (their alphabetical order).
+
+This graph is simply to get an idea of the nature of year-to-year changes in fatlity rate. It seems for most states the rates steadily go down, but there are some interesting exceptions. It also seems that for a lot of states, the rates for the first one or two years is much higher, after which the rates drastically drop. The overall decrease in fatality rates over time is likely due to factors such as laws enacted.
+
+
+##Laws
+bac, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc
+
+```{r}
+hist(drivedata$bac08)
+```
+Many of the explanatory variables of interest (bac08, bac10, perse, sbprim, sbsecon, sl70plus, gdl) appear to be binary - 0 if the law was not in place, 1 if it was. As shown in the example histogram above, there are a very small number of fractional values. 
+
+
+```{r}
+head(drivedata[drivedata$year>1990,c("year", "bac08")], 10)
+```
+
+As shown in the example section of the data above, these fractional values occur between stretches of 0 and 1. There is no additional clarifying information in the dataset or data descriptions. As such, we are moving forward with the assumption that fractional values occur when the law was enacted part way through the year, and the value represents how much of the year the law was in place for.
+
+Keeping these fractional values in our data will force the model to treat them as continuous variables, which is very problematic. We are not interested in the effect of a law if it is present for part of the year; rather, we want to know the binary effect of a law being in place. It is also very problematic to use a continuous variable in a linear model with such an odd and non-normal distribution, given the sparsity of the fractional values. As such, we are moving forward using the rounded values which will turn the fractional values into 0 or 1.
+
+
+```{r}
+#code to binarize all law variables
+drivedata$bac08_binary <- ifelse(round(drivedata$bac08)==1, 1, 0)
+drivedata$bac10_binary <- ifelse(round(drivedata$bac10)==1, 1, 0)
+drivedata$perse_binary <- ifelse(round(drivedata$perse)==1, 1, 0)
+drivedata$sbprim_binary <- ifelse(round(drivedata$sbprim)==1, 1, 0)
+drivedata$sbsecon_binary <- ifelse(round(drivedata$sbsecon)==1, 1, 0)
+drivedata$sl70plus_binary <- ifelse(round(drivedata$sl70plus)==1, 1, 0)
+drivedata$gdl_binary <- ifelse(round(drivedata$gdl)==1, 1, 0)
+```
+
+```{r}
+year_law_agg <- with(drivedata, aggregate(cbind(bac08_binary, bac10_binary, perse_binary, sbprim_binary, sbsecon_binary, sl70plus_binary, gdl_binary), list(year=year), mean))
+                     
+year_law_melt <- melt(year_law_agg, id.vars="year")
+                     
+ggplot(year_law_melt, aes(x=year, y=value, color=variable, group=variable))+
+  geom_line(size=2)+ylab("% of states with law in place")+xlab("Year")+
+  ggtitle("Percent of states with law enacted from 1980-2005")+
+  ylim(c(0,1))
+```
+
+This graph shows the % of states that had a certain law in place in every year.
+
+The blood alcohol content laws are interesting. Clearly in the early 2000s there was a big movement to decrease the legal BAC from .10 to .08 given the opposite directions of those lines. A similar, but weaker, pattern is shown with the seatbelt law being primary or secondary around 1995. 
+
+It is also interesting to note that both the graduated drivers license law and the speed limit being 70 or more changes did not happen at all until around 1995, and then fairly rapidly became more of a standard. Still, the speed limit change plateaus around 60%. It seems that about 60% of states adopted the speed limit change very quickly and the remaining states did not.
+
+
+```{r}
+drivedata$bac_combined <- ifelse(drivedata$bac08_binary==1, "bac08", 
+                                 ifelse(drivedata$bac10_binary==1, "bac10", "noBAClaw"))
+ggplot(drivedata, aes(x=bac_combined, y=totfatrte, color=bac_combined, group=bac_combined))+geom_boxplot()+
+  ggtitle("Total fatality rate, grouped by BAC law")
+
+```
+
+Predictably, in states/years where the BAC limit was .08, there were lower fatality rates than when the limit was .10. States/years where there was no BAC law in place had the highest rates on average.
+
+```{r}
+drivedata$sb_combined <- ifelse(drivedata$sbprim_binary==1, "sbprim", 
+                                 ifelse(drivedata$sbsecon_binary==1, "sbsecon", "nosblaw"))
+ggplot(drivedata, aes(x=sb_combined, y=totfatrte, color=sb_combined, group=sb_combined))+geom_boxplot()+
+  ggtitle("Total fatality rate, grouped by seatbelt law")
+
+```
+
+States/years without a seatbelt law have the highest fatality rate. States/years with the primary seatbelt law have lower rates than those with the secondary seatbelt law.
+
+```{r}
+#bac, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc
+
+ggplot(drivedata, aes(x=perse_binary, y=totfatrte, color=perse_binary, group=perse_binary))+geom_boxplot()+
+  scale_x_continuous(breaks=c(0,1), labels=c("No law", "Law in place"))+
+  ggtitle("Total fatality rate, grouped by administrative license revocation (per se law)")
+
+ggplot(drivedata, aes(x=sl70plus_binary, y=totfatrte, color=sl70plus_binary, group=sl70plus_binary))+geom_boxplot()+
+  scale_x_continuous(breaks=c(0,1), labels=c("No law", "Law in place"))+
+  ggtitle("Total fatality rate, grouped by speed limit being 70+")
+
+ggplot(drivedata, aes(x=gdl_binary, y=totfatrte, color=gdl_binary, group=gdl_binary))+geom_boxplot()+
+  scale_x_continuous(breaks=c(0,1), labels=c("No law", "Law in place"))+
+  ggtitle("Total fatality rate, grouped by graduated drivers license law")
+```
+  
+  
+  
+The above boxplots show that fatality rates are lower when the "per se" law and the graduated drivers license law are in place, and higher when the speed limit is above 70. At least based on this plot, it seems the speed limit has the weakest effect. Raising the speed limit would intuitively increase fatality rates due to faster and more reckless driving. However, based on the previous time plot, the speed limit change appeared to happen around the same time as other safe laws were being enacted more often. Including all of these variables into a model should clarify their individual, ceteris paribus effects.
+  
+  
+
+
+##Other explanatory variables
+
+```{r}
+par(mfrow=c(2,1))
+hist(drivedata$perc14_24, main="Histogram of %population age 14-24")
+boxplot(perc14_24~state, data=drivedata, main="%population age 14-24 by state")
+```
+The percent of population across states/years appears to be a normally distributed variable. This variable doesn't appear to be especially different from state to state - there are no states that tend to have an especially high or low % of ages 14-24.
+
+
+```{r}
+ggplot(drivedata, aes(x=perc14_24, y=totfatrte))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("%population age 14-24 vs. fatality rates")
+```
+
+There appears to be a linear relationship where states/years with a higher % of the population between ages 14-24 have higher fatality rates. Perhaps younger drivers are less safe.
+
+
+```{r}
+ggplot(drivedata, aes(x=year, y=perc14_24))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("%population age 14-24 from 1980-2005")
+```
+
+The % of the population between 14 and 24 very distinctly goes down from 1980 to about 1990, after which it flattens out to around 14%.
+
+
+```{r}
+par(mfrow=c(2,2))
+hist(drivedata$unem, main="Histogram of unemployment")
+hist(log(drivedata$unem), main="Histogram of unemployment (log-transformed)")
+boxplot(log(unem)~state, data=drivedata, main="unemployment rate by state")
+```
+
+The unemployment rate, which is a percent, has a strong positive skew. The normality of the distribution improves when applying a log transformation.
+
+Some states appear to have distinctly higher or lower unemployment rates.
+
+```{r}
+ggplot(drivedata, aes(x=log(unem), y=totfatrte))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("Unemployment rates vs. fatality rates")
+```
+
+There does not appear to be any discernible relationship between unemployment rates and driving fatality rates.
+
+
+```{r}
+ggplot(drivedata, aes(x=year, y=log(unem)))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("Unemployment rates per person vs. fatality rates")
+```
+
+Unemployment apears to have gone down over time, with a slight uptick in 1990.
+
+```{r}
+par(mfrow=c(2,2))
+hist(drivedata$vehicmilespc, main="Histogram of vehicle miles per person")
+boxplot(vehicmilespc~state, data=drivedata, main="vehicle miles per person by state")
+plot(vehicmiles/statepop~vehicmilespc, data=drivedata, main="Vehicle miles/state population vs. 'vehicmilspc'")
+```
+
+
+
+Although there is no description given for how "vehicmilespc" was calculated, we have shown (in the third plot above) that it is the number of vehicle miles travelled (in billions) divided by the state population. Despite this attempt at correction, it is clear from the boxplots that some states tend to have a higher or lower value for this variable.
+
+
+```{r}
+ggplot(drivedata, aes(x=vehicmilespc, y=totfatrte))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("Vehicle miles per person vs. fatality rates")
+```
+
+Fatality rates appears to be positively correlated with vehicle miles, although these relationship may be driven by a relatively small number of data points with large influence.
+
+
+```{r}
+ggplot(drivedata, aes(x=year, y=vehicmilespc))+
+  geom_point()+geom_smooth(method="loess")+ggtitle("Vehicle miles per person from 1980-2005")
+```
+
+
+
+The number of vehicle miles per person appears to steadily increase over time across states in a linear fashion.
