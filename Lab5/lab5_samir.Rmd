@@ -95,6 +95,11 @@ drivedata$sbprim_binary <- ifelse(round(drivedata$sbprim)==1, 1, 0)
 drivedata$sbsecon_binary <- ifelse(round(drivedata$sbsecon)==1, 1, 0)
 drivedata$sl70plus_binary <- ifelse(round(drivedata$sl70plus)==1, 1, 0)
 drivedata$gdl_binary <- ifelse(round(drivedata$gdl)==1, 1, 0)
+drivedata$sl55_binary <- ifelse(round(drivedata$sl55)==1, 1, 0)
+drivedata$sl65_binary <- ifelse(round(drivedata$sl65)==1, 1, 0)
+drivedata$sl70_binary <- ifelse(round(drivedata$sl70)==1, 1, 0)
+drivedata$sl75_binary <- ifelse(round(drivedata$sl75)==1, 1, 0)
+drivedata$slnone_binary <- ifelse(round(drivedata$slnone)==1, 1, 0)
 ```
 
 ```{r}
@@ -136,6 +141,17 @@ ggplot(drivedata, aes(x=sb_combined, y=totfatrte, color=sb_combined, group=sb_co
 States/years without a seatbelt law have the highest fatality rate. States/years with the primary seatbelt law have lower rates than those with the secondary seatbelt law.
 
 ```{r}
+drivedata$sl_combined <- ifelse(drivedata$sl55_binary, "sl55", 
+                                 ifelse(drivedata$sl65_binary==1, "sl65", 
+                                        ifelse(drivedata$sl70_binary==1, "sl70",
+                                               ifelse(drivedata$sl75_binary==1, "sl75","slnone"))))
+ggplot(drivedata, aes(x=sl_combined, y=totfatrte, color=sl_combined, group=sl_combined))+geom_boxplot()+
+  ggtitle("Total fatality rate, grouped by Speed Limit Law")
+```
+States/years with lower speed limits have lower fatalaty rates with the exception of speed limit of 55.
+
+
+```{r}
 #bac, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc
 
 ggplot(drivedata, aes(x=perse_binary, y=totfatrte, color=perse_binary, group=perse_binary))+geom_boxplot()+
@@ -155,8 +171,11 @@ ggplot(drivedata, aes(x=gdl_binary, y=totfatrte, color=gdl_binary, group=gdl_bin
   
 The above boxplots show that fatality rates are lower when the "per se" law and the graduated drivers license law are in place, and higher when the speed limit is above 70. At least based on this plot, it seems the speed limit has the weakest effect. Raising the speed limit would intuitively increase fatality rates due to faster and more reckless driving. However, based on the previous time plot, the speed limit change appeared to happen around the same time as other safe laws were being enacted more often. Including all of these variables into a model should clarify their individual, ceteris paribus effects.
   
-  
-
+```{r}
+ggplot(data, aes(x=minage, y=totfatrte))+
+  geom_point()+geom_smooth(method="auto")+ggtitle("Total fatality rate, grouped by minimum age")
+```
+States/years with higher minimum driving age show lower faalaty rates
 
 ##Other explanatory variables
 
