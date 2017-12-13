@@ -257,3 +257,26 @@ ggplot(drivedata, aes(x=year, y=vehicmilespc))+
 
 
 The number of vehicle miles per person appears to steadily increase over time across states in a linear fashion.
+
+2. How is the our dependent variable of interest *totfatrte* defined? What is the average of this variable in each of the years in the time period covered in this dataset? Estimate a very simple regression model of totfatrte on dummy variables for the years 1981 through 2004. What does this model explain? Describe what you find in this model. Did driving become safer over this period? Please provide a detailed explanation.
+
+```{r}
+ggplot(data, aes(factor(year), totfatrte)) +
+  geom_boxplot() + 
+  ggtitle("Fatalaty Rate by Year") + 
+  theme(plot.title = element_text(lineheight=1, face="bold"),
+        axis.text.x = element_text(size=10,angle=90)) 
+
+plot(aggregate(drivedata$totfatrte, list(drivedata$year), mean), ylab = 'Average Fatalaty Rate', xlab = 'Year', main = 'Average Fatalaty Rate by Year')
+```
+
+*totfatrte* is defined as total fatalities per 100,000 population.  Fatalaty Rate trends down from 80s to the early 90s and is somewhat flat from later 90s to 2000s.  Steepest decline in the 80s.
+
+```{r}
+glm.mod <- glm(totfatrte~d81 + d82 + d83 + d84 + d85 + d86 + d87 + d88 + d89 + d90 + d91 + d92 + d93
+               + d94 + d95 + d96 + d97 + d98 + d99 + d00 + d01 + d02 + d03 + d04, data = drivedata)
+
+summary(glm.mod)
+```
+
+The model shows the average change is fatalaty rate by each year compared to 1980.  All years show a decrease in fatalaty rates when compared to 1980.  The only year where the change is not significant is 1981.  From the years 1982 to 2004 we see significant drops in fatalaty rates ranging from ~4.5% to ~8.8%.  It appears when comparing to 1980, from 1982 to 2004 driving did become safer when measured by fatalaty rates.
