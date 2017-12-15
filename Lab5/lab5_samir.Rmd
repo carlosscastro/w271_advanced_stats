@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(ggplot2)
 library(reshape2)
+library(plm)
 load("driving.Rdata")
 drivedata <- data
 ```
@@ -279,4 +280,52 @@ glm.mod <- glm(totfatrte~d81 + d82 + d83 + d84 + d85 + d86 + d87 + d88 + d89 + d
 summary(glm.mod)
 ```
 
-The model shows the average change is fatalaty rate by each year compared to 1980.  All years show a decrease in fatalaty rates when compared to 1980.  The only year where the change is not significant is 1981.  From the years 1982 to 2004 we see significant drops in fatalaty rates ranging from ~4.5% to ~8.8%.  It appears when comparing to 1980, from 1982 to 2004 driving did become safer when measured by fatalaty rates.
+The model shows the average change is fatality rate by each year compared to 1980.  All years show a decrease in fatalaty rates when compared to 1980.  The only year where the change is not significant is 1981.  From the years 1982 to 2004 we see significant drops in fatalaty rates ranging from ~4.5% to ~8.8%.  It appears when comparing to 1980, from 1982 to 2004 driving did become safer when measured by fatalaty rates.
+
+3. Expand your model in Exercise 2 by adding variables bac08, bac10, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc, and perhaps transformations of some or all of these variables. Please explain carefully your rationale, which should be based on your EDA, behind any transformation you made. If no transformation is made, explain why transformation is not needed. How are the variables bac8 and bac10 de???ned? Interpret the coe???cients on bac8 and bac10. Do per se laws have a negative e???ect on the fatality rate? What about having a primary seat belt law? (Note that if a law was enacted sometime within a year the fraction of the year is recorded in place of the zero-one indicator.) 
+
+```{r}
+glm.mod <- glm(totfatrte~d81 + d82 + d83 + d84 + d85 + d86 + d87 + d88 + d89 + d90 + d91 + d92 + d93
+               + d94 + d95 + d96 + d97 + d98 + d99 + d00 + d01 + d02 + d03 + d04 + bac08_binary + bac10_binary + perse_binary + sb_combined + sl_combined + gdl_binary + perc14_24 + unem + vehicmilespc, data = drivedata)
+
+summary(glm.mod)
+```
+
+
+**Please explain carefully your rationale, which should be based on your EDA, behind any transformation you made. If no transformation is made, explain why transformation is not needed. **
+
+*TODO*
+
+**How are the variables bac8 and bac10 de???ned?** 
+
+BAC stands for Blood Alcohol Concentration, and BAC laws are legislations that punish driving with certain BAC. In this case, the BAC variables have more than two levels represented by multiple dummy coded variables. The variable three levels - no BAC law, BAC limit = .08, and BAC limit = .10. These three levels are coded in the two variables bac08 and bac10. 
+
+**Interpret the coe???cients on bac8 and bac10. **
+
+Both coefficients for bac08 and bac10 are highly statistically significant and the negative coefficients for both bac08 and bac10 suggest that BAC laws reduce the fatality rate under study. Curiously, the coefficient for bac08 for this model suggests that a limit for .08 has a more significant effect than .10, since the coefficient for .08 has a larger absolute value.
+
+**Do per se laws have a negative e???ect on the fatality rate? What about having a primary seat belt law? (Note that if a law was enacted sometime within a year the fraction of the year is recorded in place of the zero-one indicator.) **
+
+We can also observe that per se laws reduce the fatality rate (coefficient -7.740e-01, p-value < 0.001). Interestingly, our model doesn't support statistically significant support for the primary seat belt law coefficient.
+
+**4. Reestimate the model from Exercise 3 using a ???xed e???ects (at the state level) model. How do the coe???cients on bac08, bac10, perse, and sbprim compare with the pooled OLS estimates? Which set of estimates do you think is more reliable? What assumptions are needed in each of these models? Are these assumptions reasonable in the current context?**
+
+Let's first estimate a fixed effects model at the state level.
+
+```{r}
+
+plm.mod <- plm(totfatrte~d81 + d82 + d83 + d84 + d85 + d86 + d87 + d88 + d89 + d90 + d91 + d92 + d93
+               + d94 + d95 + d96 + d97 + d98 + d99 + d00 + d01 + d02 + d03 + d04 + bac08_binary + bac10_binary + perse_binary + sb_combined + sl_combined + gdl_binary + perc14_24 + unem + vehicmilespc, data = plm.data(drivedata, c("state", "year")))
+
+summary(plm.mod)
+```
+
+**How do the coe???cients on bac08, bac10, perse, and sbprim compare with the pooled OLS estimates? **
+
+The BAC coefficients for the fixed effects model are relatively similar to those obtained in the pooled OLS model. In both models, BAC laws suggest a reduced fatality rate, while a BAC limit of .08 seems to have a larger effect on fatality rate than a BAC limit of .10. 
+
+In the fixed effect model, the coefficient for per se laws is negative just as in the previous model, suggesting per se laws reduce the fatality rates. However, the coefficient for per se laws is one order of magnitude larger than in the pooled OLS model. Finally, while the pooled OLS model coefficient for seat belt primary laws was not statistically significant, the fixed effects model has a highly statistically significant model and a negative coefficient, suggesting that primary seat belt laws do in fact reduce fatality rates, which makes sense.
+
+
+**Which set of estimates do you think is more reliable? What assumptions are needed in each of these models? Are these assumptions reasonable in the current context?**
+
