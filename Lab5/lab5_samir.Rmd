@@ -336,3 +336,11 @@ $\Delta y_t = \delta_0 + \beta_1 \Delta x_i + \Delta u_i$
 
 The key assumption for the first difference equation is that $\Delta u_i$ is not correlated with $\Delta x_i$.  This is a version of strict exogeneity.  If we violate this assumption we will have bias in the estimators.  We also need to assume that $\Delta x_i$ varies across states and time.  We do see that there is variation across explanatory across states and time intervals.
 
+**5. Would you perfer to use a random effects model instead of the fixed effects model you build in *Exercise 4*? Why? Why not?**
+
+**6. Suppose that *vehicmilespc*, the number of miles driven per capita, increases by 1,000. Using the FE estimates, what is the estimated effect on totfatrte? Be sure to interpret the estimate as if explaining to a layperson.**
+
+Our coefficient for $vehicmilespc$ is 0.0009.  This means that there is a positive relationship between miles driven per capita and fatality rates, or the more miles driven the more likely you are the be in a fatal accident.  Specifically our estimator suggests that for every 1000 mile increase in miles per capita we expect a 0.9% increase in the fatality rate.
+
+**7. If there is serial correlation or heteroskedasticity in the idiosyncratic errors of the model, what would be the consequences on the coefficient estimates and their standard errors?**
+
