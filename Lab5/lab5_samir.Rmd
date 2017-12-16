@@ -329,3 +329,10 @@ In the fixed effect model, the coefficient for per se laws is negative just as i
 
 **Which set of estimates do you think is more reliable? What assumptions are needed in each of these models? Are these assumptions reasonable in the current context?**
 
+The estimates from the fixed effects model should be more reliable.  Simple regression suffers more from omitted variable bias, specifically we need to assume that onobserved effects $a_i$ are not correlated with the explanatory variables.  If this is not true we have heterogeneity bias.  For the fixed effects estimator we difference away the time constant unobserved effects.  
+
+First Difference:
+$\Delta y_t = \delta_0 + \beta_1 \Delta x_i + \Delta u_i$
+
+The key assumption for the first difference equation is that $\Delta u_i$ is not correlated with $\Delta x_i$.  This is a version of strict exogeneity.  If we violate this assumption we will have bias in the estimators.  We also need to assume that $\Delta x_i$ varies across states and time.  We do see that there is variation across explanatory across states and time intervals.
+
