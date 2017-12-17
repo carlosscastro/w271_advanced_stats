@@ -264,11 +264,11 @@ The number of vehicle miles per person appears to steadily increase over time ac
 ```{r}
 ggplot(data, aes(factor(year), totfatrte)) +
   geom_boxplot() + 
-  ggtitle("Fatalaty Rate by Year") + 
+  ggtitle("Fatality Rate by Year") + 
   theme(plot.title = element_text(lineheight=1, face="bold"),
         axis.text.x = element_text(size=10,angle=90)) 
 
-plot(aggregate(drivedata$totfatrte, list(drivedata$year), mean), ylab = 'Average Fatalaty Rate', xlab = 'Year', main = 'Average Fatalaty Rate by Year')
+plot(aggregate(drivedata$totfatrte, list(drivedata$year), mean), ylab = 'Average Fatality Rate', xlab = 'Year', main = 'Average Fatality Rate by Year')
 ```
 
 *totfatrte* is defined as total fatalities per 100,000 population.  Fatalaty Rate trends down from 80s to the early 90s and is somewhat flat from later 90s to 2000s.  Steepest decline in the 80s.
