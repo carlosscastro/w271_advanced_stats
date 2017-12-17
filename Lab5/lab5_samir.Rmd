@@ -346,3 +346,5 @@ Our coefficient for $vehicmilespc$ is 0.0009.  This means that there is a positi
 
 **7. If there is serial correlation or heteroskedasticity in the idiosyncratic errors of the model, what would be the consequences on the coefficient estimates and their standard errors?**
 
+If we have heteroskedasticity in the error of the model we will have both bias in the coefficient estimates and the standard errors will be incorrect.  If we have positive serial correlation we will tend to overestimate coefficients and underestimate standard errors.  The opposite would be true of negative serial correlation.
+
