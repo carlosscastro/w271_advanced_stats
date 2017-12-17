@@ -338,6 +338,8 @@ The key assumption for the first difference equation is that $\Delta u_i$ is not
 
 **5. Would you perfer to use a random effects model instead of the fixed effects model you build in *Exercise 4*? Why? Why not?**
 
+We would prefer to use of fixed effects model for excercise 4.  For our data our unobserved effects ($a_i$), are likely correlated with our explanatory variables.  Things such as road conditions and weather conditions are likely specific to states and are slow to change over time and should have an effect on fatality rate.  In addition since we have data from states we might not be able to consider all our observations to be random draws from a large enough population.  This also suggest that a fixed effect model would be more appropriate.
+
 **6. Suppose that *vehicmilespc*, the number of miles driven per capita, increases by 1,000. Using the FE estimates, what is the estimated effect on totfatrte? Be sure to interpret the estimate as if explaining to a layperson.**
 
 Our coefficient for $vehicmilespc$ is 0.0009.  This means that there is a positive relationship between miles driven per capita and fatality rates, or the more miles driven the more likely you are the be in a fatal accident.  Specifically our estimator suggests that for every 1000 mile increase in miles per capita we expect a 0.9% increase in the fatality rate.
