@@ -9,6 +9,8 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Data Loading
+
 ```{r}
 library(ggplot2)
 library(reshape2)
@@ -18,8 +20,7 @@ drivedata <- data
 ```
 
 
-
-#Structure of the data
+# Structure of the data
 
 ```{r}
 head(drivedata)
@@ -31,12 +32,13 @@ The data is in long form. There are 25 rows per state, each representing a diffe
 
 Some variables like the BAC and seatbelt law variable have more than two levels represented by multiple dummy coded variables. For example, BAC has three levels - no BAC law, BAC limit = .08, and BAC limit = .10. These three levels are coded in the two variables bac08 and bac10. Each of the years is also dummy coded in its own column.
 
-An odd fluke in the data noticed above that there is no state number 2. The number is suppose to represent the states in alphabetical order, but 2 is skipped and the maximum number is 51 instead of 50. This will not affect our modeling in any way since the number is effectively a categorical variable and the values don't matter.
+An odd fluke in the data noticed above that there is no state number 2. The number is supposed to represent the states in alphabetical order, but 2 is skipped and the maximum number is 51 instead of 50. This will not affect our modeling in any way since the number is effectively a categorical variable and the values don't matter.
 
 
 #EDA
 
 ##Total fatality rate
+
 The primary variable of interest is "totfatrte", the total fatalities per 100,000 population.
 
 ```{r}
@@ -74,7 +76,7 @@ This graph is simply to get an idea of the nature of year-to-year changes in fat
 ```{r}
 hist(drivedata$bac08)
 ```
-Many of the explanatory variables of interest (bac08, bac10, perse, sbprim, sbsecon, sl70plus, gdl) appear to be binary - 0 if the law was not in place, 1 if it was. As shown in the example histogram above, there are a very small number of fractional values. 
+Many of the explanatory variables of interest (bac08, bac10, perse, sbprim, sbsecon, sl70plus, gdl) appear to be binary - 0 if the law was not in place, 1 if it was. As shown in the example histogram above, there are a very small number of fractional values.
 
 
 ```{r}
@@ -113,9 +115,9 @@ ggplot(year_law_melt, aes(x=year, y=value, color=variable, group=variable))+
   ylim(c(0,1))
 ```
 
-This graph shows the % of states that had a certain law in place in every year.
+This graph shows the percentage of states that had a certain law in place in every year.
 
-The blood alcohol content laws are interesting. Clearly in the early 2000s there was a big movement to decrease the legal BAC from .10 to .08 given the opposite directions of those lines. A similar, but weaker, pattern is shown with the seatbelt law being primary or secondary around 1995. 
+The blood alcohol content laws are interesting. Clearly in the early 2000s there was a signicant movement to decrease the legal BAC from .10 to .08 given the opposite directions of those lines. A similar, but weaker, pattern is shown with the seatbelt law being primary or secondary around 1995. 
 
 It is also interesting to note that both the graduated drivers license law and the speed limit being 70 or more changes did not happen at all until around 1995, and then fairly rapidly became more of a standard. Still, the speed limit change plateaus around 60%. It seems that about 60% of states adopted the speed limit change very quickly and the remaining states did not.
 
@@ -254,7 +256,9 @@ ggplot(drivedata, aes(x=year, y=vehicmilespc))+
 
 The number of vehicle miles per person appears to steadily increase over time across states in a linear fashion.
 
-2. How is the our dependent variable of interest *totfatrte* defined? What is the average of this variable in each of the years in the time period covered in this dataset? Estimate a very simple regression model of totfatrte on dummy variables for the years 1981 through 2004. What does this model explain? Describe what you find in this model. Did driving become safer over this period? Please provide a detailed explanation.
+# Question 2
+
+How is the our dependent variable of interest *totfatrte* defined? What is the average of this variable in each of the years in the time period covered in this dataset? Estimate a very simple regression model of totfatrte on dummy variables for the years 1981 through 2004. What does this model explain? Describe what you find in this model. Did driving become safer over this period? Please provide a detailed explanation.
 
 ```{r}
 ggplot(data, aes(factor(year), totfatrte)) +
@@ -277,7 +281,9 @@ summary(glm.mod)
 
 The model shows the average change is fatality rate by each year compared to 1980.  All years show a decrease in fatalaty rates when compared to 1980.  The only year where the change is not significant is 1981.  From the years 1982 to 2004 we see significant drops in fatalaty rates ranging from ~4.5% to ~8.8%.  It appears when comparing to 1980, from 1982 to 2004 driving did become safer when measured by fatalaty rates.
 
-3. Expand your model in Exercise 2 by adding variables bac08, bac10, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc, and perhaps transformations of some or all of these variables. Please explain carefully your rationale, which should be based on your EDA, behind any transformation you made. If no transformation is made, explain why transformation is not needed. How are the variables bac8 and bac10 defined? Interpret the coefficients on bac8 and bac10. Do per se laws have a negative effect on the fatality rate? What about having a primary seat belt law? (Note that if a law was enacted sometime within a year the fraction of the year is recorded in place of the zero-one indicator.) 
+# Question 3
+
+Expand your model in Exercise 2 by adding variables bac08, bac10, perse, sbprim, sbsecon, sl70plus, gdl, perc14_24, unem, vehicmilespc, and perhaps transformations of some or all of these variables. Please explain carefully your rationale, which should be based on your EDA, behind any transformation you made. If no transformation is made, explain why transformation is not needed. How are the variables bac8 and bac10 defined? Interpret the coefficients on bac8 and bac10. Do per se laws have a negative effect on the fatality rate? What about having a primary seat belt law? (Note that if a law was enacted sometime within a year the fraction of the year is recorded in place of the zero-one indicator.) 
 
 ```{r}
 glm.mod <- glm(totfatrte~d81 + d82 + d83 + d84 + d85 + d86 + d87 + d88 + d89 + d90 + d91 + d92 + d93
@@ -286,24 +292,24 @@ glm.mod <- glm(totfatrte~d81 + d82 + d83 + d84 + d85 + d86 + d87 + d88 + d89 + d
 summary(glm.mod)
 ```
 
-
-**Please explain carefully your rationale, which should be based on your EDA, behind any transformation you made. If no transformation is made, explain why transformation is not needed. **
+## Transformations
 
 The only transformation we made was to binarize the law variables. The justification was explained in more detail earlier in the EDA section. In short, a very small number of fractional numbers betwen 0 and 1 exit for the law variables which were clearly intended to be binary (law was in place or wasn't that year). Based on patterns in the data it seems as if the fracitonal numbers represent if the law was in place only for part of the year. It would be bad for our model to include variables with such an odd distribution, so we transformed those variabels into binary variables by rounding it. While we noticed slight positive skews for the dependent variable totfatrte and unem, we did not believe the skew was big enough to warrant any transformation.
 
-**How are the variables bac8 and bac10 defined?** 
+## Definition: Bac8 and Bac10
 
 BAC stands for Blood Alcohol Concentration, and BAC laws are legislations that punish driving with certain BAC. In this case, the BAC variables have more than two levels represented by multiple dummy coded variables. The variable three levels - no BAC law, BAC limit = .08, and BAC limit = .10. These three levels are coded in the two variables bac08 and bac10. 
 
-**Interpret the coefficients on bac8 and bac10. **
+## Interpretation of Bac8 and Bac10 Coefficients
 
 Both coefficients for bac08 and bac10 are highly statistically significant and the negative coefficients for both bac08 and bac10 suggest that BAC laws reduce the fatality rate under study. Curiously, the coefficient for bac08 for this model suggests that a limit for .08 has a more significant effect than .10, since the coefficient for .08 has a larger absolute value.
 
+## Discussion on law impact on fatality rate
 **Do per se laws have a negative effect on the fatality rate? What about having a primary seat belt law? (Note that if a law was enacted sometime within a year the fraction of the year is recorded in place of the zero-one indicator.) **
 
 We can also observe that per se laws reduce the fatality rate (coefficient -7.740e-01, p-value < 0.001). Interestingly, our model doesn't support statistically significant support for the primary seat belt law coefficient.
 
-**4. Reestimate the model from Exercise 3 using a fixed effects (at the state level) model. How do the coefficients on bac08, bac10, perse, and sbprim compare with the pooled OLS estimates? Which set of estimates do you think is more reliable? What assumptions are needed in each of these models? Are these assumptions reasonable in the current context?**
+# Question 4
 
 Let's first estimate a fixed effects model at the state level.
 
@@ -315,14 +321,13 @@ plm.mod <- plm(totfatrte~d81 + d82 + d83 + d84 + d85 + d86 + d87 + d88 + d89 + d
 summary(plm.mod)
 ```
 
-**How do the coefficients on bac08, bac10, perse, and sbprim compare with the pooled OLS estimates? **
+## Law coefficients comparision for Fixed effects vs Pooled OLS
 
 The BAC coefficients for the fixed effects model are relatively similar to those obtained in the pooled OLS model. In both models, BAC laws suggest a reduced fatality rate, while a BAC limit of .08 seems to have a larger effect on fatality rate than a BAC limit of .10. 
 
 In the fixed effect model, the coefficient for per se laws is negative just as in the previous model, suggesting per se laws reduce the fatality rates. However, the coefficient for per se laws is one order of magnitude larger than in the pooled OLS model. Finally, while the pooled OLS model coefficient for seat belt primary laws was not statistically significant, the fixed effects model has a highly statistically significant model and a negative coefficient, suggesting that primary seat belt laws do in fact reduce fatality rates, which makes sense.
 
-
-**Which set of estimates do you think is more reliable? What assumptions are needed in each of these models? Are these assumptions reasonable in the current context?**
+## Comparison between estimates and model assumptions
 
 The estimates from the fixed effects model should be more reliable.  Simple regression suffers more from omitted variable bias, specifically we need to assume that onobserved effects $a_i$ are not correlated with the explanatory variables.  If this is not true we have heterogeneity bias.  For the fixed effects estimator we difference away the time constant unobserved effects.  
 
@@ -331,15 +336,19 @@ $\Delta y_t = \delta_0 + \beta_1 \Delta x_i + \Delta u_i$
 
 The key assumption for the first difference equation is that $\Delta u_i$ is not correlated with $\Delta x_i$.  This is a version of strict exogeneity.  If we violate this assumption we will have bias in the estimators.  We also need to assume that $\Delta x_i$ varies across states and time.  We do see that there is variation across explanatory across states and time intervals.
 
-**5. Would you perfer to use a random effects model instead of the fixed effects model you build in *Exercise 4*? Why? Why not?**
+# Question 5: Random Effects vs Fixed Effects model
 
-We would prefer to use of fixed effects model for excercise 4.  For our data our unobserved effects ($a_i$), are likely correlated with our explanatory variables.  Things such as road and weather conditions are likely specific to states and are slow to change over time and should have an effect on fatality rate.  In addition since we have data from states we might not be able to consider all our observations to be random draws from a large enough population.  This also suggests that a fixed effect model would be more appropriate.
+We would prefer to use of fixed effects model from excercise 4, since for our data, the unobserved effects ($a_i$) are likely correlated with our explanatory variables. Things such as road and weather conditions are likely specific to states and are slow to change over time and should have an effect on fatality rate. In addition, since we have data from states we might not be able to consider all our observations to be random draws from a large enough population.  This also suggests that a fixed effect model would be more appropriate.
 
-**6. Suppose that *vehicmilespc*, the number of miles driven per capita, increases by 1,000. Using the FE estimates, what is the estimated effect on totfatrte? Be sure to interpret the estimate as if explaining to a layperson.**
+# Question 6
+
+Here we analyze the scenario where *vehicmilespc*, the number of miles driven per capita, increases by 1,000. Using the FE estimates, what is the estimated effect on totfatrte? Be sure to interpret the estimate as if explaining to a layperson.
 
 Our coefficient for $vehicmilespc$ is 0.0009.  This means that there is a positive relationship between miles driven per capita and fatality rates, or the more miles driven the more likely you are the be in a fatal accident.  Specifically our estimator suggests that for every 1000 mile increase in miles per capita we expect a 0.9% increase in the fatality rate.  The result is significant so we are confident this is a true effect and not due to random variation.
 
-**7. If there is serial correlation or heteroskedasticity in the idiosyncratic errors of the model, what would be the consequences on the coefficient estimates and their standard errors?**
+# Question 7
+
+Now we discuss the scenario where there is serial correlation or heteroskedasticity in the idiosyncratic errors of the model, what would be the consequences on the coefficient estimates and their standard errors?
 
 If we have heteroskedasticity in the error of the model we will have both bias in the coefficient estimates and the standard errors will be incorrect.  If we have positive serial correlation we will tend to overestimate coefficients and underestimate standard errors. These lower standard errors would lead to artificially low p-values and results that overstate the statistical significance.  The opposite would be true of negative serial correlation - with artificailly higher standard errors we would be more likely to commit type II errors.
 
